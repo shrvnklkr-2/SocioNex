@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-mist: var(--mist);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-navy: var(--navy);
+  --color-accent: var(--accent);
+  --color-cream: var(--cream);
+  --color-indigo: var(--indigo);
+  --color-mint: var(--mint);
+}
+
+:root {
+  color-scheme: light;
+  --ink: #141a2b;
+  --paper: #f3f5fb;
+  --card: #ffffff;
+  --mist: #eef1f8;
+  --line: #e4e8f2;
+  --muted: #667085;
+  --navy: #0c1733;
+  --navy-hover: #1a2c58;
+  --accent: #24306e;
+  --cream: #f6f1e6;
+  --cream-deep: #efe6d4;
+  --indigo: #4451d6;
+  --mint: #0f9f6e;
+  --glow: rgba(68, 81, 214, 0.18);
+  --map-ink: #141a2b;
+  --selection: #d9defc;
+}
+
+.dark {
+  color-scheme: dark;
+  --ink: #e8eefb;
+  --paper: #070b14;
+  --card: #12192b;
+  --mist: #1a2438;
+  --line: #2c3b58;
+  --muted: #9aabc6;
+  --navy: #243668;
+  --navy-hover: #314886;
+  --accent: #c5d0ff;
+  --cream: #1a2236;
+  --cream-deep: #232c44;
+  --indigo: #9aafff;
+  --mint: #3dcea0;
+  --glow: rgba(120, 146, 255, 0.28);
+  --map-ink: #e8eefb;
+  --selection: #2c3d78;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(980px 460px at 8% -12%, var(--glow), transparent 58%),
+    radial-gradient(720px 380px at 100% 0%, color-mix(in srgb, var(--mint) 18%, transparent), transparent 50%),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+.dark .bg-navy {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 48%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(170, 188, 255, 0.16);
+}
+
+a.bg-navy:hover,
+button.bg-navy:hover {
+  background-color: var(--navy-hover);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.55s ease both;
+}
+
+@keyframes ping-soft {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.15);
+    opacity: 0;
+  }
+}
+
+.ping-soft {
+  animation: ping-soft 2.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .rise,
+  .ping-soft {
+    animation: none;
+  }
+}
