@@ -22,21 +22,23 @@ const NAV = [
 
 function PartnerCard({ partner, onJoin }) {
   return (
-    <article className="rounded-[24px] border border-line bg-card p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-mist text-sm font-semibold">
-            {partner.name.slice(0, 1)}
-          </span>
-          <div>
-            <h3 className="font-semibold">{partner.name}</h3>
-            <p className="text-sm text-muted">{partner.blurb}</p>
+    <article className="rounded-[24px] border-2 border-emerald-500 bg-white dark:bg-slate-900 p-5 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] transition-all duration-300 flex flex-col justify-between">
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300 text-sm font-bold shadow-sm border border-emerald-300">
+              {partner.name.slice(0, 1)}
+            </span>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">{partner.name}</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{partner.blurb}</p>
+            </div>
           </div>
+          <span className="shrink-0 rounded-full bg-emerald-500/20 border border-emerald-400 px-2.5 py-1 text-xs font-bold text-emerald-900 dark:text-emerald-200">{partner.kind}</span>
         </div>
-        <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-200">{partner.kind}</span>
+        <p className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">{partner.place} · {partner.fit}</p>
       </div>
-      <p className="mt-3 text-xs text-muted">{partner.place} · {partner.fit}</p>
-      <button type="button" onClick={onJoin} className="mt-4 w-full rounded-full border border-line py-2.5 text-sm font-medium hover:bg-mist">
+      <button type="button" onClick={onJoin} className="mt-4 w-full rounded-full border-2 border-emerald-500 bg-white dark:bg-slate-800 py-2.5 text-sm font-bold text-emerald-800 dark:text-emerald-200 hover:bg-emerald-600 hover:text-white transition-all duration-200 shadow-sm">
         Join this team →
       </button>
     </article>
@@ -96,26 +98,39 @@ export default function UniversityDashboard() {
   }
 
   const sidebar = (
-    <aside className="lg:w-60 lg:shrink-0">
+    <aside className="lg:w-60 lg:shrink-0 sticky top-20 z-20">
       <label className="mb-3 block text-sm lg:hidden">
-        <span className="mb-1 block text-xs font-semibold tracking-[0.14em] text-muted uppercase">Section</span>
-        <select value={view} onChange={(event) => setView(event.target.value)} className="w-full rounded-2xl border border-line bg-card px-3 py-2">
+        <span className="mb-1 block text-xs font-bold tracking-[0.14em] text-emerald-700 uppercase dark:text-emerald-400">Section</span>
+        <select value={view} onChange={(event) => setView(event.target.value)} className="w-full rounded-2xl border-2 border-emerald-500 bg-white dark:bg-slate-900 dark:border-emerald-600 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white shadow-[0_0_15px_rgba(16,185,129,0.2)] outline-none focus:border-emerald-500">
           {NAV.map((item) => (
             <option key={item.id} value={item.id}>{item.label}</option>
           ))}
         </select>
       </label>
-      <nav className="hidden rounded-[28px] border border-line bg-card p-3 lg:block">
-        {NAV.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setView(item.id)}
-            className={`block w-full rounded-2xl px-3 py-2.5 text-left text-sm ${view === item.id ? "bg-navy text-white" : "hover:bg-mist"}`}
-          >
-            {item.label}
-          </button>
-        ))}
+      <nav className="hidden rounded-[24px] border-2 border-emerald-500 bg-white/95 dark:bg-slate-900/95 p-3.5 shadow-[0_0_20px_rgba(16,185,129,0.25)] lg:block space-y-1.5">
+        <div className="px-3 py-1.5 text-xs font-bold tracking-widest text-emerald-800 dark:text-emerald-400 uppercase border-b border-emerald-200 dark:border-emerald-800/80 mb-2 pb-2">
+          Menu Navigation
+        </div>
+        {NAV.map((item) => {
+          const active = view === item.id
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setView(item.id)}
+              className={`group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-bold transition-all duration-200 ${
+                active
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30 border-2 border-emerald-400 translate-x-1"
+                  : "text-slate-700 dark:text-slate-200 border border-transparent hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-800 dark:hover:text-emerald-300 hover:translate-x-1"
+              }`}
+            >
+              <span>{item.label}</span>
+              <span className={`text-xs transition-transform duration-200 ${active ? "translate-x-0 opacity-100" : "opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"}`}>
+                →
+              </span>
+            </button>
+          )
+        })}
       </nav>
     </aside>
   )
@@ -138,22 +153,22 @@ export default function UniversityDashboard() {
       ) : null}
 
       {view === "overview" && institution ? (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           <StatGrid problems={problems} overview={overview} />
-          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <article className="rounded-[28px] border border-line bg-card p-5">
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] w-full">
+            <article className="rounded-[28px] border border-emerald-200/90 dark:border-emerald-800/60 bg-white dark:bg-slate-900 p-5 shadow-[0_0_20px_-3px_rgba(16,185,129,0.18)] hover:shadow-[0_0_25px_0px_rgba(16,185,129,0.25)] hover:border-emerald-400 transition-all duration-300">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="font-display text-3xl">Challenge momentum</h2>
-                  <p className="text-sm text-muted">Submission and resolution velocity · last 6 months</p>
+                  <h2 className="font-display text-3xl font-normal text-slate-900 dark:text-white">Challenge momentum</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Submission and resolution velocity · last 6 months</p>
                 </div>
-                <Link to="/impact" className="rounded-full border border-line px-3 py-1.5 text-xs text-muted">View analytics</Link>
+                <Link to="/impact" className="rounded-full border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50">View analytics</Link>
               </div>
               <MomentumChart />
             </article>
             <ListeningCard />
           </div>
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full">
             {partners.slice(0, 3).map((partner) => (
               <PartnerCard key={partner.id} partner={partner} onJoin={() => invite(partner.id)} />
             ))}
@@ -163,16 +178,16 @@ export default function UniversityDashboard() {
 
       {view === "details" && institution ? (
         <form
-          className="max-w-2xl space-y-4 rounded-[28px] border border-line bg-card p-5"
+          className="w-full space-y-4 rounded-[28px] border border-emerald-200/90 dark:border-emerald-800/60 bg-white dark:bg-slate-900 p-6 shadow-[0_0_20px_-3px_rgba(16,185,129,0.18)]"
           onSubmit={(event) => {
             event.preventDefault()
             store.updateInstitution(institution.id, { about })
           }}
         >
-          <h2 className="font-display text-3xl">Campus details</h2>
+          <h2 className="font-display text-3xl font-normal text-slate-900 dark:text-white">Campus details</h2>
           <TextArea label="About the institution" value={about} onChange={(event) => setAbout(event.target.value)} />
           <fieldset>
-            <legend className="mb-2 text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">Expertise</legend>
+            <legend className="mb-2 text-[11px] font-bold tracking-[0.14em] text-emerald-700 dark:text-emerald-400 uppercase">Expertise</legend>
             <div className="flex flex-wrap gap-2">
               {DOMAINS.map((domain) => {
                 const on = institution.expertise.includes(domain)
@@ -186,7 +201,7 @@ export default function UniversityDashboard() {
                         : [...institution.expertise, domain]
                       store.updateInstitution(institution.id, { expertise }, { quiet: true })
                     }}
-                    className={`rounded-full px-3 py-1.5 text-sm ${on ? "bg-navy text-white" : "border border-line bg-card"}`}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all ${on ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20" : "border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50"}`}
                   >
                     {domain}
                   </button>
@@ -199,31 +214,33 @@ export default function UniversityDashboard() {
       ) : null}
 
       {view === "depts" && institution ? (
-        <section className="max-w-xl rounded-[28px] border border-line bg-card p-5">
-          <h2 className="font-display text-3xl">Departments and research</h2>
-          <ul className="mt-4 space-y-2 text-sm">
+        <section className="w-full rounded-[28px] border border-emerald-200/90 dark:border-emerald-800/60 bg-white dark:bg-slate-900 p-6 shadow-[0_0_20px_-3px_rgba(16,185,129,0.18)]">
+          <h2 className="font-display text-3xl font-normal text-slate-900 dark:text-white">Departments and research</h2>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 text-sm">
             {institution.depts.map((item) => (
-              <li key={item} className="rounded-2xl bg-mist px-3 py-2">{item}</li>
+              <li key={item} className="rounded-2xl border border-emerald-100 bg-emerald-50/60 dark:bg-emerald-950/30 dark:border-emerald-900 px-4 py-3 font-medium text-emerald-950 dark:text-emerald-200">{item}</li>
             ))}
           </ul>
           <form
-            className="mt-4 flex gap-2"
+            className="mt-6 flex flex-col sm:flex-row gap-3"
             onSubmit={(event) => {
               event.preventDefault()
               store.addDepartment(institution.id, dept)
               setDept("")
             }}
           >
-            <Input label="Add a department or centre" value={dept} onChange={(event) => setDept(event.target.value)} />
+            <div className="flex-1">
+              <Input label="Add a department or centre" value={dept} onChange={(event) => setDept(event.target.value)} />
+            </div>
           </form>
-          <Button className="mt-3" onClick={() => { store.addDepartment(institution.id, dept); setDept("") }}>Add</Button>
+          <Button className="mt-3" onClick={() => { store.addDepartment(institution.id, dept); setDept("") }}>Add Department</Button>
         </section>
       ) : null}
 
       {view === "faculty" && institution ? (
-        <section className="max-w-xl rounded-[28px] border border-line bg-card p-5">
-          <h2 className="font-display text-3xl">Faculty mentors</h2>
-          <ul className="mt-4 space-y-2 text-sm">
+        <section className="w-full rounded-[28px] border border-emerald-200/90 dark:border-emerald-800/60 bg-white dark:bg-slate-900 p-6 shadow-[0_0_20px_-3px_rgba(16,185,129,0.18)]">
+          <h2 className="font-display text-3xl font-normal text-slate-900 dark:text-white">Faculty mentors</h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
             {institution.faculty.map((item) => {
               const name = typeof item === "string" ? item : item.name
               const meta =
@@ -231,16 +248,16 @@ export default function UniversityDashboard() {
                   ? null
                   : [item.title, item.department].filter(Boolean).join(" · ")
               return (
-                <li key={name} className="rounded-2xl bg-mist px-3 py-2">
-                  <p className="font-medium">{name}</p>
-                  {meta ? <p className="mt-0.5 text-muted">{meta}</p> : null}
+                <li key={name} className="rounded-2xl border border-emerald-100 bg-emerald-50/60 dark:bg-emerald-950/30 dark:border-emerald-900 px-4 py-3">
+                  <p className="font-semibold text-emerald-950 dark:text-emerald-200">{name}</p>
+                  {meta ? <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{meta}</p> : null}
                 </li>
               )
             })}
           </ul>
-          <div className="mt-4">
-            <Input label="Add faculty" value={faculty} onChange={(event) => setFaculty(event.target.value)} />
-            <Button className="mt-3" onClick={() => { store.addFaculty(institution.id, faculty); setFaculty("") }}>Add</Button>
+          <div className="mt-6">
+            <Input label="Add faculty mentor" value={faculty} onChange={(event) => setFaculty(event.target.value)} />
+            <Button className="mt-3" onClick={() => { store.addFaculty(institution.id, faculty); setFaculty("") }}>Add Faculty</Button>
           </div>
         </section>
       ) : null}

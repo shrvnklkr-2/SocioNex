@@ -103,57 +103,61 @@ export function ProblemRow({ problem, defaultOpen = false, children, onFeedback 
   }, [open, problem, localMatches])
 
   return (
-    <article className="rounded-[24px] border border-line bg-card">
-      <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <article className="rounded-[24px] border-2 border-emerald-500 bg-white dark:bg-slate-900 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] transition-all duration-300 w-full overflow-hidden">
+      <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold text-ink">{detail.title}</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">{detail.title}</h3>
             <StatusPill status={detail.status} label={STATUS_LABEL[detail.status] || detail.status} />
           </div>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {detail.district}
             {detail.location ? ` · ${detail.location}` : ""} · {detail.domain} · {formatDate(detail.createdAt)}
           </p>
-          <p className="mt-1 text-sm text-ink/80">{solverLine(detail)}</p>
+          <p className="mt-1 text-sm font-medium text-emerald-800 dark:text-emerald-300">{solverLine(detail)}</p>
         </div>
         <button
           type="button"
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
-          className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium ${open ? "border-navy bg-navy text-white" : "border-line bg-card text-ink hover:bg-mist"}`}
+          className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+            open
+              ? "border-emerald-600 bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+              : "border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-50"
+          }`}
         >
           {open ? "Hide status" : "Check status"}
         </button>
       </div>
       {open ? (
-        <div className="border-t border-line px-4 py-4 sm:px-5">
-          <div className="rounded-[22px] bg-mist p-4">
-            <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">Problem</p>
-            <p className="mt-2 text-sm leading-6 text-ink">{detail.description}</p>
+        <div className="border-t border-emerald-200/80 dark:border-slate-800 px-4 py-4 sm:px-6">
+          <div className="rounded-[22px] bg-emerald-50/50 dark:bg-slate-950/60 p-4 border border-emerald-100 dark:border-slate-800">
+            <p className="text-[11px] font-bold tracking-[0.16em] text-emerald-700 dark:text-emerald-400 uppercase">Problem</p>
+            <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-200">{detail.description}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-xs text-muted">Who is solving</p>
-                <p className="mt-1 text-sm font-medium">{solverLine(detail)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Who is solving</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{solverLine(detail)}</p>
               </div>
               <div>
-                <p className="text-xs text-muted">Outcome</p>
-                <p className="mt-1 text-sm font-medium">{outcomeLabel(detail)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Outcome</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{outcomeLabel(detail)}</p>
               </div>
             </div>
-            {detail.note ? <p className="mt-3 text-sm text-muted">{detail.note}</p> : null}
+            {detail.note ? <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{detail.note}</p> : null}
             <MatchCard problem={detail} />
             <ol className="mt-4 grid gap-2 sm:grid-cols-2">
               {milestones.map((step) => (
-                <li key={step.label} className="flex items-center gap-2 text-sm">
-                  <span className={`h-2.5 w-2.5 rounded-full ${step.done ? "bg-mint" : "bg-slate-300"}`} />
-                  <span className={step.done ? "text-ink" : "text-muted"}>{step.label}</span>
+                <li key={step.label} className="flex items-center gap-2 text-sm font-medium">
+                  <span className={`h-2.5 w-2.5 rounded-full ${step.done ? "bg-emerald-500 shadow-sm" : "bg-slate-300 dark:bg-slate-700"}`} />
+                  <span className={step.done ? "text-slate-900 dark:text-white font-semibold" : "text-slate-500 dark:text-slate-400"}>{step.label}</span>
                 </li>
               ))}
             </ol>
             {(matches.length > 0 || localMatches.length > 0) &&
             ["submitted", "in_validation", "assigned", "requested"].includes(detail.status) ? (
               <div className="mt-4">
-                <p className="text-xs text-muted">Campus · department · faculty shortlist</p>
+                <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Campus · department · faculty shortlist</p>
                 <ul className="mt-2 space-y-1.5 text-sm">
                   {(matches.length ? matches : localMatches).slice(0, 4).map((item) => {
                     const name = item.name || item.universityName
@@ -162,15 +166,15 @@ export function ProblemRow({ problem, defaultOpen = false, children, onFeedback 
                     const score = item.score
                     const reason = item.reason
                     return (
-                      <li key={name} className="rounded-xl bg-card px-3 py-2">
-                        <span className="font-medium">{name}</span>
-                        {score != null ? <span className="text-muted"> · {score}%</span> : null}
+                      <li key={name} className="rounded-xl bg-white dark:bg-slate-900 border border-emerald-100 dark:border-slate-800 px-3 py-2 shadow-sm">
+                        <span className="font-semibold text-slate-900 dark:text-white">{name}</span>
+                        {score != null ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold"> · {score}%</span> : null}
                         {dept || faculty ? (
-                          <span className="mt-0.5 block text-muted">
+                          <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
                             {[dept, faculty].filter(Boolean).join(" · ")}
                           </span>
                         ) : reason ? (
-                          <span className="text-muted"> · {reason}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400"> · {reason}</span>
                         ) : null}
                       </li>
                     )

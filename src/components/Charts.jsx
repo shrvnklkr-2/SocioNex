@@ -62,13 +62,13 @@ export function ListeningCard() {
     [338, 58],
   ]
   return (
-    <article className="relative overflow-hidden rounded-[28px] bg-navy p-6 text-white sm:p-7">
+    <article className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 p-6 text-white sm:p-7 shadow-[0_0_25px_-2px_rgba(16,185,129,0.25)] border border-emerald-500/30">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold tracking-[0.18em] text-white/50">NETWORK SIGNAL</p>
-          <h3 className="mt-2 font-display text-[1.7rem] leading-tight">The system is listening</h3>
+          <p className="text-[11px] font-bold tracking-[0.18em] text-emerald-300 uppercase">NETWORK SIGNAL</p>
+          <h3 className="mt-2 font-display text-[1.7rem] leading-tight font-normal">The system is listening</h3>
         </div>
-        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10">
+        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 backdrop-blur-sm text-emerald-300">
           <Sparkles className="h-4 w-4" />
         </span>
       </div>
@@ -76,28 +76,28 @@ export function ListeningCard() {
         <path
           d="M 20 100 C 70 100, 90 48, 150 52 S 250 108, 346 36"
           fill="none"
-          stroke="rgba(255,255,255,0.35)"
+          stroke="rgba(16, 185, 129, 0.45)"
           strokeDasharray="4 7"
           strokeWidth="1.5"
         />
         {dots.map(([cx, cy]) => (
           <g key={`${cx}-${cy}`}>
-            <circle cx={cx} cy={cy} r="8" fill="rgba(140,160,255,0.18)" />
-            <circle cx={cx} cy={cy} r="3.5" fill="#d7defc" />
+            <circle cx={cx} cy={cy} r="8" fill="rgba(16, 185, 129, 0.25)" />
+            <circle cx={cx} cy={cy} r="3.5" fill="#a7f3d0" />
           </g>
         ))}
       </svg>
-      <div className="mt-2 grid grid-cols-2 gap-4">
+      <div className="mt-2 grid grid-cols-2 gap-4 pt-2">
         <div>
-          <p className="text-3xl font-semibold tracking-tight">1,204</p>
-          <p className="text-sm text-white/60">active contributors</p>
+          <p className="text-3xl font-bold tracking-tight text-emerald-200">1,204</p>
+          <p className="text-sm text-emerald-100/70">active contributors</p>
         </div>
         <div>
-          <p className="text-3xl font-semibold tracking-tight">24</p>
-          <p className="text-sm text-white/60">districts represented</p>
+          <p className="text-3xl font-bold tracking-tight text-emerald-200">24</p>
+          <p className="text-sm text-emerald-100/70">districts represented</p>
         </div>
       </div>
-      <Link to="/impact" className="mt-6 inline-flex items-center gap-1 text-sm text-white/80 hover:text-white">
+      <Link to="/impact" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-300 hover:text-white transition-colors">
         Explore network analytics <ArrowUpRight className="h-4 w-4" />
       </Link>
     </article>

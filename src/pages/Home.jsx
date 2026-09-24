@@ -1,189 +1,408 @@
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { ArrowRight, Pause, Play } from "lucide-react"
-import { ListeningCard, MomentumChart } from "../components/Charts"
-import { StateMap } from "../components/StateMap"
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Brain,
+  GraduationCap,
+  Landmark,
+  Users,
+  Building2,
+  Pause,
+  Play,
+  ArrowUpRight,
+} from "lucide-react"
+import { EcosystemMap } from "../components/EcosystemMap"
+import { MomentumChart } from "../components/Charts"
+import { SpotlightCarousel } from "../components/SpotlightCarousel"
 import { useTitle } from "../components/ui"
 
-const STEPS = [
+const HOW_IT_WORKS_STEPS = [
   {
-    title: "A citizen reports",
-    body: "A handpump has failed in Palkot. The report carries the village name, two photos, and who is walking for water.",
+    step: "01",
+    role: "Citizen",
+    title: "A citizen reports a challenge",
+    body: "A handpump failure or water shortage is reported in Palkot. The submission includes geo-tagged coordinates, local context photos, and urgency details.",
+    tag: "Reported in field",
+    icon: User,
+    color: "from-emerald-500 to-teal-600",
   },
   {
-    title: "The queue sorts it",
-    body: "The brief is tagged Water resources, checked against open cases, and marked high priority for the department.",
+    step: "02",
+    role: "AI Validation",
+    title: "AI sorts & validates the queue",
+    body: "AI algorithms group similar reports, score urgency, filter duplicate submissions, and categorize issues before human review.",
+    tag: "Urgency scored: High",
+    icon: Brain,
+    color: "from-teal-500 to-emerald-700",
   },
   {
-    title: "A campus is matched",
-    body: "Birsa Agricultural University is suggested from its water and rural engineering work, then asked to accept.",
+    step: "03",
+    role: "University",
+    title: "A campus department is matched",
+    body: "Birsa Agricultural University's Rural Engineering department is matched based on expertise, faculty research, and student lab availability.",
+    tag: "Campus assigned",
+    icon: GraduationCap,
+    color: "from-emerald-600 to-teal-800",
   },
   {
-    title: "Industry joins the pilot",
-    body: "A partner brings sensors and a field mentor. The district, the campus, and the citizen watch the same milestones.",
+    step: "04",
+    role: "Industry & Govt",
+    title: "Industry joins field pilot",
+    body: "An industry partner supplies sensor hardware and mentorship. District authorities, campus teams, and citizens track real-time milestones together.",
+    tag: "Pilot in progress",
+    icon: Building2,
+    color: "from-teal-600 to-emerald-600",
   },
 ]
 
-const PIPELINE = [
-  {
-    index: "01",
-    title: "AI challenge validation",
-    body: "Group similar reports, score urgency, and keep the queue free of repeats before a person reviews it.",
-  },
-  {
-    index: "02",
-    title: "University matching",
-    body: "Send a validated brief to the campus whose departments, labs, and faculty already work in that domain.",
-  },
-  {
-    index: "03",
-    title: "Industry collaboration",
-    body: "Invite a mentor, funder, MSME, or lab when a student team needs money, a prototype, or a pilot site.",
-  },
-  {
-    index: "04",
-    title: "Project lifecycle tracking",
-    body: "Follow review, team formation, milestones, field tests, and the outcome the community can see.",
-  },
+const IMPACT_STATS = [
+  { value: "1,280+", label: "Problems reported", icon: User },
+  { value: "860+", label: "Ideas validated", icon: Brain },
+  { value: "320+", label: "Projects launched", icon: GraduationCap },
+  { value: "12,500+", label: "Communities reached", icon: Building2 },
 ]
 
 export default function Home() {
   useTitle("Home")
-  const [step, setStep] = useState(0)
-  const [playing, setPlaying] = useState(true)
+  const [activeStep, setActiveStep] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(true)
 
+  // Auto cycle how it works steps
   useEffect(() => {
-    if (!playing) return undefined
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (reduce) return undefined
-    const timer = window.setInterval(() => setStep((value) => (value + 1) % STEPS.length), 3200)
-    return () => window.clearInterval(timer)
-  }, [playing])
+    if (!isPlaying) return undefined
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % HOW_IT_WORKS_STEPS.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [isPlaying])
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
-      <section className="grid items-center gap-10 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
-        <div className="rise">
-          <p className="text-[11px] font-semibold tracking-[0.2em] text-muted uppercase">Jharkhand · citizens, campuses, companies</p>
-          <h1 className="mt-4 max-w-xl font-display text-5xl leading-[0.95] text-ink sm:text-7xl">
-            Transform challenges into real solutions.
-          </h1>
-          <p className="mt-5 max-w-lg text-base leading-7 text-muted">
-            People already know what is breaking. Socionex gives that report a path through validation, a university team, and an industry partner who can help put it in the field.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/report" className="rounded-full bg-navy px-5 py-3 text-sm font-medium text-white">
-              Report a problem
-            </Link>
-            <Link to="/live-demo" className="rounded-full border border-line bg-card px-5 py-3 text-sm font-medium">
-              Watch the path
-            </Link>
-          </div>
-        </div>
-        <StateMap />
-      </section>
-
-      <section className="rounded-[32px] bg-navy px-5 py-8 text-white sm:px-10 sm:py-12">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.18em] text-white/50">ONE SIGNAL · MANY HANDS</p>
-            <h2 className="mt-3 max-w-xl font-display text-4xl leading-tight sm:text-5xl">
-              From a local observation to a shared outcome.
-            </h2>
-          </div>
-          <p className="max-w-xs text-sm leading-6 text-white/70">Report, validate, match a campus, then pilot with someone who can build.</p>
-        </div>
-        <div className="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {PIPELINE.map((item) => (
-            <article key={item.index} className="rounded-3xl border border-white/10 bg-white/10 p-5">
-              <p className="text-xs text-white/45">{item.index}</p>
-              <h3 className="mt-3 text-lg font-semibold">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-white/70">{item.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-8 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-        <article className="rounded-[28px] border border-line bg-card p-5 sm:p-7">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="font-display text-3xl">Momentum is measurable.</h2>
-              <p className="mt-1 text-sm text-muted">Submission and resolution velocity · last 6 months</p>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
+      {/* ---------------------------------------------------- */}
+      {/* SECTION 1: HERO SECTION (#home) */}
+      {/* ---------------------------------------------------- */}
+      <section
+        id="home"
+        className="scroll-mt-20 py-4 sm:py-6 lg:py-8"
+      >
+        <div className="grid items-center gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
+          <div className="rise space-y-5">
+            {/* Stakeholders tag line */}
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold tracking-[0.2em] text-emerald-800 uppercase dark:text-emerald-300">
+              <span>CITIZENS</span>
+              <span className="text-emerald-400 dark:text-emerald-600">×</span>
+              <span>UNIVERSITIES</span>
+              <span className="text-emerald-400 dark:text-emerald-600">×</span>
+              <span>GOVERNMENT</span>
+              <span className="text-emerald-400 dark:text-emerald-600">×</span>
+              <span>INDUSTRY</span>
+              <span className="text-emerald-400 dark:text-emerald-600">×</span>
+              <span>COMMUNITIES</span>
             </div>
-            <Link to="/impact" className="rounded-full border border-line px-3 py-1.5 text-xs font-medium text-muted">
-              View analytics
+
+            {/* Main Title */}
+            <h1 className="max-w-xl font-display text-4xl font-normal leading-[1.08] tracking-tight text-emerald-950 sm:text-5xl lg:text-6xl dark:text-white">
+              Transform challenges into <span className="italic text-emerald-600 dark:text-emerald-400">real solutions.</span>
+            </h1>
+
+            {/* Subheading */}
+            <p className="max-w-xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+              People already know what is breaking. We connect citizens, academic minds, government and industry to turn local observations into validated, real-world solutions.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap items-center gap-4 pt-1">
+              <Link
+                to="/report"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/35 active:scale-[0.98] dark:bg-emerald-500 dark:hover:bg-emerald-600"
+              >
+                Report a problem
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => scrollToSection("how-it-works")}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-300 bg-white/90 px-6 py-3 text-sm font-semibold text-emerald-900 backdrop-blur-sm transition-all hover:border-emerald-400 hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-900/80 dark:text-emerald-200 dark:hover:bg-slate-800"
+              >
+                Explore the process
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* HERO CONNECTED ECOSYSTEM GRAPHIC */}
+          <div className="w-full">
+            <EcosystemMap />
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------- */}
+      {/* SECTION 2: HOW IT WORKS SECTION (#how-it-works) */}
+      {/* ---------------------------------------------------- */}
+      <section
+        id="how-it-works"
+        className="scroll-mt-20 py-4 sm:py-6"
+      >
+        <div className="rounded-3xl border border-emerald-200/80 bg-white/90 p-6 shadow-sm backdrop-blur-md dark:border-emerald-800/80 dark:bg-slate-950/60 sm:p-8">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <div className="flex items-center gap-2 text-[11px] font-bold tracking-[0.2em] text-emerald-800 uppercase dark:text-emerald-400">
+                <span>HOW IT WORKS</span>
+                <span className="h-0.5 w-8 bg-emerald-500/40" />
+              </div>
+              <h2 className="mt-1 font-display text-3xl font-normal text-slate-900 sm:text-4xl dark:text-white">
+                One report, four desks.
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                {isPlaying ? <Pause className="h-3.5 w-3.5 text-emerald-600" /> : <Play className="h-3.5 w-3.5 text-emerald-600" />}
+                {isPlaying ? "Pause autoplay" : "Play walkthrough"}
+              </button>
+
+              <Link
+                to="/live-demo"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:underline dark:text-emerald-400"
+              >
+                Full demo <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Interactive Steps Grid */}
+          <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+            {/* Step Selection List */}
+            <div className="space-y-2.5">
+              {HOW_IT_WORKS_STEPS.map((item, idx) => {
+                const isCurrent = activeStep === idx
+
+                return (
+                  <button
+                    key={item.step}
+                    type="button"
+                    onClick={() => {
+                      setActiveStep(idx)
+                      setIsPlaying(false)
+                    }}
+                    className={`w-full text-left rounded-2xl p-3.5 transition-all duration-300 ${
+                      isCurrent
+                        ? "border-2 border-emerald-500 bg-emerald-50/70 shadow-md dark:border-emerald-400 dark:bg-emerald-950/40"
+                        : "border border-slate-200/80 bg-white hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-900/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-bold ${isCurrent ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"}`}>
+                          {item.step}
+                        </span>
+                        <h3 className={`text-sm font-bold ${isCurrent ? "text-slate-900 dark:text-white" : "text-slate-700 dark:text-slate-300"}`}>
+                          {item.role}
+                        </h3>
+                      </div>
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        {item.tag}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-xs text-slate-600 line-clamp-1 dark:text-slate-400">
+                      {item.title}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Step Focus Content Display */}
+            <div className="relative flex flex-col justify-between rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/50 via-white to-emerald-50/20 p-5 shadow-inner dark:border-emerald-900/40 dark:from-slate-900 dark:via-slate-900/90 dark:to-emerald-950/40 sm:p-6">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
+                    STAGE {HOW_IT_WORKS_STEPS[activeStep].step} OF 04
+                  </span>
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${HOW_IT_WORKS_STEPS[activeStep].color} text-white shadow-md`}>
+                    {(() => {
+                      const Icon = HOW_IT_WORKS_STEPS[activeStep].icon
+                      return <Icon className="h-5 w-5" />
+                    })()}
+                  </div>
+                </div>
+
+                <h3 className="mt-3 font-display text-2xl text-slate-900 dark:text-white">
+                  {HOW_IT_WORKS_STEPS[activeStep].title}
+                </h3>
+
+                <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {HOW_IT_WORKS_STEPS[activeStep].body}
+                </p>
+              </div>
+
+              {/* Progress Dots */}
+              <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-200/80 dark:border-slate-800">
+                <div className="flex gap-2">
+                  {HOW_IT_WORKS_STEPS.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setActiveStep(idx)
+                        setIsPlaying(false)
+                      }}
+                      className={`h-2 rounded-full transition-all ${
+                        activeStep === idx ? "w-8 bg-emerald-600 dark:bg-emerald-400" : "w-2 bg-slate-300 dark:bg-slate-700"
+                      }`}
+                      aria-label={`Go to stage ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveStep((prev) => (prev + 1) % HOW_IT_WORKS_STEPS.length)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400"
+                >
+                  Next step <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------- */}
+      {/* SECTION 3: FEATURES SECTION (#features) */}
+      {/* ---------------------------------------------------- */}
+      <section
+        id="features"
+        className="scroll-mt-20 py-4 sm:py-6"
+      >
+        <div className="rounded-3xl border border-emerald-200/80 bg-white/90 p-6 shadow-sm backdrop-blur-md dark:border-emerald-800/80 dark:bg-slate-950/60 sm:p-8">
+          <SpotlightCarousel />
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------- */}
+      {/* SECTION 4: IMPACT SECTION (#impact) */}
+      {/* ---------------------------------------------------- */}
+      <section
+        id="impact"
+        className="scroll-mt-20 py-4 sm:py-6 space-y-6"
+      >
+        {/* Main Impact Card */}
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/30 p-6 shadow-sm dark:border-emerald-800 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 sm:p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <span className="text-[11px] font-bold tracking-[0.2em] text-emerald-800 uppercase dark:text-emerald-400">
+                IMPACT
+              </span>
+              <h2 className="mt-1 font-display text-3xl font-normal text-slate-900 sm:text-4xl dark:text-white">
+                Real progress. Measured together.
+              </h2>
+            </div>
+
+            <Link
+              to="/impact"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              Full analytics
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="mt-4 flex gap-4 text-xs text-muted">
-            <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-indigo" /> Submitted</span>
-            <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-mint" /> Resolved</span>
+
+          {/* Metric Stats Cards Bar */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {IMPACT_STATS.map((stat) => {
+              const Icon = stat.icon
+              return (
+                <div
+                  key={stat.label}
+                  className="flex items-center gap-4 rounded-2xl border border-emerald-100 bg-white/95 p-4 shadow-sm backdrop-blur-md dark:border-emerald-900/50 dark:bg-slate-900/80"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="font-display text-2xl font-bold text-slate-900 dark:text-white">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      {stat.label}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
-          <MomentumChart />
-        </article>
-        <div className="grid gap-4">
-          <p className="text-[11px] font-semibold tracking-[0.18em] text-muted uppercase">Impact</p>
-          <article className="flex flex-1 flex-col justify-between rounded-[28px] bg-navy p-6 text-white">
-            <h2 className="font-display text-3xl leading-tight">The next solution could begin with you.</h2>
-            <Link to="/report" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-[#0c1733]">
+
+          {/* Bottom Landscape Skyline & Stakeholders Footer Bar */}
+          <div className="mt-8 pt-5 border-t border-slate-200/80 dark:border-slate-800">
+            <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+              <span className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+                WORKING TOGETHER FOR BETTER COMMUNITIES
+              </span>
+
+              <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-medium text-slate-600 dark:text-slate-400">
+                <span className="flex items-center gap-1.5"><Landmark className="h-4 w-4 text-emerald-600" /> Government</span>
+                <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4 text-teal-600" /> Universities</span>
+                <span className="flex items-center gap-1.5"><User className="h-4 w-4 text-emerald-600" /> Citizens</span>
+                <span className="flex items-center gap-1.5"><Users className="h-4 w-4 text-emerald-700" /> NGOs / Communities</span>
+                <span className="flex items-center gap-1.5"><Building2 className="h-4 w-4 text-teal-700" /> Industry</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MOMENTUM & LISTENING SUB-SECTION */}
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <article className="rounded-3xl border border-emerald-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display text-2xl text-slate-900 dark:text-white">Momentum is measurable.</h3>
+                <p className="mt-1 text-xs text-slate-500">Submission and resolution velocity · last 6 months</p>
+              </div>
+              <Link to="/impact" className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                Analytics
+              </Link>
+            </div>
+            <div className="mt-4 flex gap-4 text-xs text-slate-500">
+              <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-emerald-600" /> Submitted</span>
+              <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-teal-500" /> Resolved</span>
+            </div>
+            <div className="mt-4">
+              <MomentumChart />
+            </div>
+          </article>
+
+          <article className="flex flex-col justify-between rounded-3xl bg-emerald-950 p-6 text-white shadow-xl dark:bg-emerald-950">
+            <div>
+              <span className="text-[11px] font-bold tracking-[0.2em] text-emerald-400 uppercase">JOIN THE MOVEMENT</span>
+              <h3 className="mt-3 font-display text-3xl leading-tight font-normal">
+                The next solution could begin with you.
+              </h3>
+            </div>
+            <Link
+              to="/report"
+              className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-bold text-emerald-950 transition-transform hover:scale-105"
+            >
               Report a challenge <ArrowRight className="h-4 w-4" />
             </Link>
           </article>
         </div>
-      </section>
-
-      <section className="mt-10">
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.18em] text-muted uppercase">Live demo</p>
-            <h2 className="mt-1 font-display text-4xl">One report, four desks.</h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => setPlaying((value) => !value)}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm"
-          >
-            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {playing ? "Pause" : "Play"}
-          </button>
-        </div>
-        <div className="overflow-hidden rounded-[28px] border border-line bg-card">
-          <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="border-b border-line p-6 lg:border-r lg:border-b-0">
-              <ol className="space-y-2">
-                {STEPS.map((item, index) => (
-                  <li key={item.title}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStep(index)
-                        setPlaying(false)
-                      }}
-                      className={`w-full rounded-2xl px-3 py-3 text-left ${step === index ? "bg-mist" : "hover:bg-paper"}`}
-                    >
-                      <span className="text-xs text-muted">0{index + 1}</span>
-                      <span className="mt-1 block font-medium">{item.title}</span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="flex min-h-64 flex-col justify-between bg-cream p-6 sm:p-10">
-              <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Live demo video</p>
-              <div>
-                <h3 className="font-display text-4xl leading-tight">{STEPS[step].title}</h3>
-                <p className="mt-4 max-w-md text-base leading-7 text-ink/80">{STEPS[step].body}</p>
-              </div>
-              <Link to="/live-demo" className="mt-8 text-sm font-medium text-accent">
-                Open the full walkthrough
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <ListeningCard />
       </section>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useTitle } from "../components/ui"
+import { SpotlightCarousel } from "../components/SpotlightCarousel"
 
 const MODULES = [
   {
@@ -46,29 +47,39 @@ const MODULES = [
 export default function Features() {
   useTitle("Features")
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <p className="text-[11px] font-semibold tracking-[0.18em] text-muted uppercase">The portal</p>
-      <h1 className="mt-2 max-w-3xl font-display text-5xl leading-tight sm:text-6xl">Seven desks, one case file.</h1>
-      <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-        Socionex is the front end of a societal innovation portal for Jharkhand. These modules are wired together in this browser so a report can travel the full path.
-      </p>
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
-        {MODULES.map((module, index) => (
-          <article key={module.title} className="rounded-[28px] border border-line bg-card p-6">
-            <p className="text-xs text-muted">0{index + 1}</p>
-            <h2 className="mt-2 font-display text-3xl">{module.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-muted">{module.body}</p>
-            <ul className="mt-4 space-y-2 text-sm">
-              {module.points.map((point) => (
-                <li key={point} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo" />
-                  {point}
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </div>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-12">
+      {/* Spotlight Carousel Hero */}
+      <section className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/60 sm:p-8">
+        <SpotlightCarousel />
+      </section>
+
+      {/* Module Overview Grid */}
+      <section>
+        <p className="text-[11px] font-bold tracking-[0.18em] text-teal-700 uppercase dark:text-teal-400">THE PORTAL DESKS</p>
+        <h1 className="mt-2 font-display text-4xl font-normal text-slate-900 sm:text-5xl dark:text-white">
+          Seven desks, one case file.
+        </h1>
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-400">
+          Socionex is the front end of a societal innovation portal for Jharkhand. These modules are wired together so a report can travel the full path.
+        </p>
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {MODULES.map((module, index) => (
+            <article key={module.title} className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+              <p className="text-xs font-bold text-slate-400">0{index + 1}</p>
+              <h2 className="mt-2 font-display text-2xl font-semibold text-slate-900 dark:text-white">{module.title}</h2>
+              <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{module.body}</p>
+              <ul className="mt-4 space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                {module.points.map((point) => (
+                  <li key={point} className="flex gap-2 items-center">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
