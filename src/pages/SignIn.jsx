@@ -34,7 +34,7 @@ export default function SignIn() {
 
   const finish = (user) => navigate(pathForRole(user.role))
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError("Enter the email you registered with.")
@@ -44,7 +44,7 @@ export default function SignIn() {
       setError("Enter your password.")
       return
     }
-    const result = login({ role, email, password })
+    const result = await login({ role, email, password })
     if (result.error) {
       setError(result.error)
       return

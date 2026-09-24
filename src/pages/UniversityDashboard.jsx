@@ -45,8 +45,21 @@ function PartnerCard({ partner, onJoin }) {
 
 export default function UniversityDashboard() {
   const store = useStore()
-  const { user, problems, institutions, partners } = store
+  const { user, problems, institutions, partners, overview, openBoard } = store
   const institution = institutions.find((item) => item.id === user.universityId)
+    || institutions.find((item) => item.name === user.org)
+    || {
+      id: user.org || "campus",
+      name: user.org || user.name,
+      type: "Campus",
+      location: "",
+      about: "",
+      expertise: [],
+      depts: [],
+      faculty: [],
+      accepted: true,
+      declined: false,
+    }
   const [view, setView] = useState("overview")
   const [about, setAbout] = useState(institution?.about || "")
   const [dept, setDept] = useState("")
@@ -55,10 +68,22 @@ export default function UniversityDashboard() {
   const name = helloName(user)
   useTitle(`Hello ${name}`)
 
-  const mine = problems.filter((item) => item.universityId === user.universityId)
+  const mine = problems.filter((item) =>
+    item.universityName === institution.name
+    || item.universityId === user.universityId
+    || item.universityId === institution.id
+    || item.universityId === institution.name,
+  )
   const inbox = mine.filter((item) => item.status === "assigned")
   const tracking = mine.filter((item) => !["assigned", "requested"].includes(item.status))
-  const openPool = problems.filter((item) => !item.universityId && ["submitted", "in_validation"].includes(item.status))
+  const suggestedForUs = problems.filter(
+    (item) =>
+      ["submitted", "in_validation"].includes(item.status)
+      && (item.suggestedUniversityId === institution.id || item.suggestedUniversityName === institution.name),
+  )
+  const openPool = openBoard?.length
+    ? openBoard
+    : problems.filter((item) => ["submitted", "in_validation"].includes(item.status))
   const active = mine.find((item) => ["in_progress", "collaborating"].includes(item.status))
 
   const invite = (partnerId) => {
@@ -114,7 +139,7 @@ export default function UniversityDashboard() {
 
       {view === "overview" && institution ? (
         <div className="space-y-4">
-          <StatGrid problems={problems} />
+          <StatGrid problems={problems} overview={overview} />
           <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
             <article className="rounded-[28px] border border-line bg-card p-5">
               <div className="flex items-start justify-between">
@@ -199,9 +224,19 @@ export default function UniversityDashboard() {
         <section className="max-w-xl rounded-[28px] border border-line bg-card p-5">
           <h2 className="font-display text-3xl">Faculty mentors</h2>
           <ul className="mt-4 space-y-2 text-sm">
-            {institution.faculty.map((item) => (
-              <li key={item} className="rounded-2xl bg-mist px-3 py-2">{item}</li>
-            ))}
+            {institution.faculty.map((item) => {
+              const name = typeof item === "string" ? item : item.name
+              const meta =
+                typeof item === "string"
+                  ? null
+                  : [item.title, item.department].filter(Boolean).join(" · ")
+              return (
+                <li key={name} className="rounded-2xl bg-mist px-3 py-2">
+                  <p className="font-medium">{name}</p>
+                  {meta ? <p className="mt-0.5 text-muted">{meta}</p> : null}
+                </li>
+              )
+            })}
           </ul>
           <div className="mt-4">
             <Input label="Add faculty" value={faculty} onChange={(event) => setFaculty(event.target.value)} />
@@ -214,6 +249,19 @@ export default function UniversityDashboard() {
         <div className="space-y-3">
           <h2 className="font-display text-3xl">All problems</h2>
           <p className="text-sm text-muted">Request an open brief. The department confirms it before work starts.</p>
+          {suggestedForUs.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Suggested for your campus</p>
+              {suggestedForUs.map((problem) => (
+                <ProblemRow key={`sug-${problem.id}`} problem={problem}>
+                  <p className="mb-2 text-sm text-muted">
+                    {[problem.suggestedDepartment, problem.suggestedFaculty].filter(Boolean).join(" · ")}
+                  </p>
+                  <Button onClick={() => store.requestProblem(problem.id)}>Request this problem</Button>
+                </ProblemRow>
+              ))}
+            </div>
+          ) : null}
           {openPool.length === 0 ? <p className="text-sm text-muted">Nothing is waiting without a campus.</p> : null}
           {openPool.map((problem) => (
             <ProblemRow key={problem.id} problem={problem}>
@@ -235,6 +283,9 @@ export default function UniversityDashboard() {
           {inbox.length === 0 ? <p className="text-sm text-muted">No brief is waiting for your decision.</p> : null}
           {inbox.map((problem) => (
             <ProblemRow key={problem.id} problem={problem} defaultOpen>
+              <p className="mb-3 text-sm text-muted">
+                Matched to {[problem.suggestedDepartment, problem.suggestedFaculty].filter(Boolean).join(" · ") || "your campus"}
+              </p>
               <TextArea
                 label="Note"
                 value={reason[problem.id] || ""}

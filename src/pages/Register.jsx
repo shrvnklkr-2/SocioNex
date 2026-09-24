@@ -55,7 +55,7 @@ export default function Register() {
     navigate(pathForRole(user.role))
   }
 
-  const submitCitizen = (event) => {
+  const submitCitizen = async (event) => {
     event.preventDefault()
     const next = passwordErrors(form)
     if (!form.name.trim()) next.name = "Add the name people should see."
@@ -63,10 +63,10 @@ export default function Register() {
     if (form.aadhaar && !/^\d{12}$/.test(form.aadhaar)) next.aadhaar = "Aadhaar must be 12 digits, or leave it blank."
     setErrors(next)
     if (Object.keys(next).length) return
-    finish(enter({ role: "citizen", name: form.name.trim(), email: form.email, password: form.password }))
+    finish(await enter({ role: "citizen", name: form.name.trim(), email: form.email, password: form.password }))
   }
 
-  const submitCommunity = (event) => {
+  const submitCommunity = async (event) => {
     event.preventDefault()
     const next = passwordErrors(form)
     if (!form.org.trim()) next.org = "Add the organisation name."
@@ -74,7 +74,7 @@ export default function Register() {
     if (form.phone && form.phone.replace(/\D/g, "").length < 10) next.phone = "Enter a 10-digit phone number."
     setErrors(next)
     if (Object.keys(next).length) return
-    finish(enter({
+    finish(await enter({
       role: "community",
       name: form.org.trim(),
       email: form.email,
@@ -85,7 +85,7 @@ export default function Register() {
     }))
   }
 
-  const submitUniversity = (event) => {
+  const submitUniversity = async (event) => {
     event.preventDefault()
     const next = passwordErrors(form)
     if (!form.org.trim()) next.org = "Add the institution name."
@@ -93,7 +93,7 @@ export default function Register() {
     if (!form.location.trim()) next.location = "Add the campus location."
     setErrors(next)
     if (Object.keys(next).length) return
-    finish(enter({
+    finish(await enter({
       role: "university",
       name: form.name.trim() || form.org.trim(),
       email: form.email,
@@ -105,14 +105,14 @@ export default function Register() {
     }))
   }
 
-  const submitIndustry = (event) => {
+  const submitIndustry = async (event) => {
     event.preventDefault()
     const next = passwordErrors(form)
     if (!form.org.trim()) next.org = "Add the organisation name."
     if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Enter a valid email."
     setErrors(next)
     if (Object.keys(next).length) return
-    finish(enter({
+    finish(await enter({
       role: "industry",
       name: form.name.trim() || form.org.trim(),
       email: form.email,
@@ -125,14 +125,14 @@ export default function Register() {
     }))
   }
 
-  const submitGovernment = (event) => {
+  const submitGovernment = async (event) => {
     event.preventDefault()
     const next = passwordErrors(form)
     if (!form.department.trim()) next.department = "Add the department."
     if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Enter a valid email."
     setErrors(next)
     if (Object.keys(next).length) return
-    finish(enter({
+    finish(await enter({
       role: "government",
       name: form.name.trim() || form.department.trim(),
       email: form.email,

@@ -6,10 +6,15 @@ import { useStore } from "../context/Store"
 import { helloName } from "../data/logic"
 
 export default function CitizenDashboard() {
-  const { user, problems } = useStore()
-  const mine = problems.filter((item) => item.ownerId === user.id)
+  const { user, problems, submitFeedback } = useStore()
   const name = helloName(user)
   useTitle(`Hello ${name}`)
+  const mine = problems.filter((item) =>
+    item.ownerId === user.id
+    || item.ownerName === user.name
+    || (user.email && item.ownerEmail === user.email),
+  )
+  const needsFeedback = mine.find((item) => item.status === "completed" && !item.feedback)
 
   return (
     <DashboardFrame
@@ -33,8 +38,13 @@ export default function CitizenDashboard() {
             <p className="text-sm text-muted">{mine.length} in your name</p>
             <Link to="/report" className="text-sm font-medium text-accent">Report another</Link>
           </div>
-          {mine.map((problem, index) => (
-            <ProblemRow key={problem.id} problem={problem} defaultOpen={index === 0} />
+          {mine.map((problem) => (
+            <ProblemRow
+              key={problem.id}
+              problem={problem}
+              defaultOpen={needsFeedback ? problem.id === needsFeedback.id : problem.id === mine[0].id}
+              onFeedback={submitFeedback}
+            />
           ))}
         </div>
       )}

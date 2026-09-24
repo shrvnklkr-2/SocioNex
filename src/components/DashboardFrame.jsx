@@ -6,7 +6,7 @@ import { ThemeToggle } from "./Theme"
 import { useStore } from "../context/Store"
 
 export function DashboardFrame({ eyebrow, title, subtitle, children, sidebar }) {
-  const { user, signOut } = useStore()
+  const { user, signOut, apiOnline } = useStore()
 
   return (
     <div className="min-h-screen bg-paper">
@@ -17,6 +17,9 @@ export function DashboardFrame({ eyebrow, title, subtitle, children, sidebar }) 
           </Link>
           <div className="flex items-center gap-2">
             <span className="hidden text-sm text-muted md:inline">{user?.org || user?.name}</span>
+            <span className={`hidden rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline ${apiOnline ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "bg-amber-500/15 text-amber-800"}`}>
+              {apiOnline ? "API live" : "Local demo"}
+            </span>
             <ThemeToggle />
             <Notifications />
             <button type="button" onClick={signOut} className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-3 py-2 text-sm">

@@ -10,6 +10,7 @@ import Impact from "./pages/Impact"
 import IndustryDashboard from "./pages/IndustryDashboard"
 import LiveDemo from "./pages/LiveDemo"
 import NotFound from "./pages/NotFound"
+import PoseTrack from "./pages/PoseTrack"
 import Register from "./pages/Register"
 import ReportProblem from "./pages/ReportProblem"
 import SignIn from "./pages/SignIn"
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="/features" element={<Features />} />
         <Route path="/impact" element={<Impact />} />
         <Route path="/live-demo" element={<LiveDemo />} />
+        <Route path="/pose" element={<PoseTrack />} />
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/register" element={<Register />} />
         <Route path="/report" element={<ReportProblem />} />

@@ -1,25 +1,31 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Button, Input, Select, TextArea, useTitle } from "../components/ui"
+import { ValidationProcess } from "../components/ValidationProcess"
 import { useStore } from "../context/Store"
-import { pathForRole } from "../data/logic"
+import { buildValidationReport, pathForRole } from "../data/logic"
 import { DISTRICTS, DOMAINS } from "../data/seed"
 
 const CAN_FILE = ["citizen", "community", "government"]
 
 export default function ReportProblem() {
   useTitle("Report a problem")
-  const { user, reportProblem } = useStore()
+  const { user, reportProblem, problems, institutions } = useStore()
   const navigate = useNavigate()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [district, setDistrict] = useState("Ranchi")
   const [location, setLocation] = useState("")
   const [domain, setDomain] = useState("")
-  const [files, setFiles] = useState([])
+  const [uploads, setUploads] = useState([])
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState(null)
+
+  const report = useMemo(() => {
+    if (!result) return null
+    return buildValidationReport(result, problems, institutions)
+  }, [result, problems, institutions])
 
   if (!user || !CAN_FILE.includes(user.role)) {
     return (
@@ -44,7 +50,7 @@ export default function ReportProblem() {
     )
   }
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault()
     if (title.trim().length < 8) {
       setError("Give the problem a title of at least 8 characters.")
@@ -56,49 +62,36 @@ export default function ReportProblem() {
     }
     setError("")
     setBusy(true)
-    const wait = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700
-    window.setTimeout(() => {
-      const draft = reportProblem({
-        title,
-        description,
-        district,
-        location,
-        domain,
-        files,
-        owner: user,
-      })
-      setBusy(false)
-      setResult(draft)
-    }, wait)
+    const draft = await reportProblem({
+      title,
+      description,
+      district,
+      location,
+      domain,
+      files: uploads.map((file) => file.name),
+      file: uploads[0],
+      owner: user,
+    })
+    setBusy(false)
+    setResult(draft)
   }
 
-  if (result) {
+  if (result && report) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-        <p className="text-[11px] font-semibold tracking-[0.18em] text-muted uppercase">Demo classifier</p>
-        <h1 className="mt-2 font-display text-5xl">Filed in the validation queue.</h1>
-        <div className="mt-6 space-y-3 rounded-[28px] border border-line bg-card p-6 text-sm leading-6">
-          <p><span className="text-muted">Domain · </span>{result.domain}</p>
-          <p><span className="text-muted">Priority · </span>{result.priority}</p>
-          <p>
-            <span className="text-muted">Suggested campus · </span>
-            {result.suggestedUniversityName || "No approved campus listed for this domain yet"}
-          </p>
-          <p>
-            <span className="text-muted">Duplicate check · </span>
-            {result.duplicateTitle ? `Possible duplicate of “${result.duplicateTitle}”.` : "No close title in the open queue."}
-          </p>
-          <p className="text-muted">
-            Keyword rules in this browser did the sorting. A department still has to validate the brief before a campus is assigned.
-          </p>
-        </div>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={() => navigate(pathForRole(user.role))}>Open your desk</Button>
-          <Button variant="ghost" onClick={() => { setResult(null); setTitle(""); setDescription(""); setFiles([]) }}>
-            File another
-          </Button>
-        </div>
-      </div>
+      <ValidationProcess
+        report={report}
+        problem={result}
+        user={user}
+        onDone={() => navigate(pathForRole(user.role))}
+        onFileAnother={() => {
+          setResult(null)
+          setTitle("")
+          setDescription("")
+          setLocation("")
+          setDomain("")
+          setUploads([])
+        }}
+      />
     )
   }
 
@@ -133,10 +126,10 @@ export default function ReportProblem() {
             multiple
             accept="image/*,video/*,.pdf"
             className="mt-1.5 block w-full text-sm font-normal normal-case tracking-normal"
-            onChange={(event) => setFiles([...(event.target.files || [])].map((file) => file.name))}
+            onChange={(event) => setUploads([...(event.target.files || [])])}
           />
         </label>
-        {files.length > 0 ? <p className="text-xs text-muted">{files.join(", ")}</p> : null}
+        {uploads.length > 0 ? <p className="text-xs text-muted">{uploads.map((file) => file.name).join(", ")}</p> : null}
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         <Button type="submit" disabled={busy}>{busy ? "Reading the report…" : "Submit challenge"}</Button>
       </form>

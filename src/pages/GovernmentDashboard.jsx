@@ -13,6 +13,7 @@ export default function GovernmentDashboard() {
   const {
     problems,
     institutions,
+    overview,
     routeToUniversity,
     acceptUniversityRequest,
     returnProblem,
@@ -42,7 +43,7 @@ export default function GovernmentDashboard() {
       title="Government"
       subtitle="Validate what citizens file, approve a campus, and route a brief to the institution that can carry it."
     >
-      <StatGrid problems={problems} />
+      <StatGrid problems={problems} overview={overview} />
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
         <article className="rounded-[28px] border border-line bg-card p-5">
           <div className="flex items-start justify-between gap-3">
@@ -105,7 +106,13 @@ export default function GovernmentDashboard() {
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
                   Filed by {problem.ownerName}
-                  {problem.suggestedUniversityName ? ` · Suggested campus: ${problem.suggestedUniversityName}` : ""}
+                  {problem.universityName
+                    ? ` · Routed: ${problem.universityName}`
+                    : problem.suggestedUniversityName
+                      ? ` · Suggested: ${problem.suggestedUniversityName}`
+                      : ""}
+                  {problem.suggestedDepartment ? ` · ${problem.suggestedDepartment}` : ""}
+                  {problem.suggestedFaculty ? ` · ${problem.suggestedFaculty}` : ""}
                 </p>
                 {problem.status === "requested" ? (
                   <div className="flex flex-wrap gap-2">

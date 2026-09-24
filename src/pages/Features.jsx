@@ -36,6 +36,11 @@ const MODULES = [
     body: "Each desk gets the updates that belong to it: a new filing, a campus request, an industry decision, a pilot checkpoint.",
     points: ["Bell on every workspace", "Role-specific messages", "Status wording the citizen can read"],
   },
+  {
+    title: "Real-time pose tracking",
+    body: "A field camera draws a live skeleton and joint angles in the browser. Useful for accessibility, rehab, and labour-motion briefs without uploading video.",
+    points: ["Webcam skeleton overlay", "Knee and elbow angles", "Runs locally after the model loads"],
+  },
 ]
 
 export default function Features() {

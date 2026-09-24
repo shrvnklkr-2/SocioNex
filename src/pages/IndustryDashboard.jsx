@@ -5,9 +5,10 @@ import { solverLine } from "../data/logic"
 
 export default function IndustryDashboard() {
   useTitle("Industry")
-  const { user, problems, respondAsIndustry } = useStore()
+  const { user, problems, respondAsIndustry, openBoard } = useStore()
   const incoming = problems.filter((item) => item.industryId === user.industryId && item.industryStatus === "pending")
   const history = problems.filter((item) => item.industryId === user.industryId && item.industryStatus === "accepted")
+  const opportunities = (openBoard?.length ? openBoard : problems).slice(0, 3)
 
   return (
     <DashboardFrame
@@ -23,7 +24,7 @@ export default function IndustryDashboard() {
         </p>
         <div className="mt-6 grid grid-cols-3 gap-3 text-sm">
           <div>
-            <p className="text-2xl font-semibold">17</p>
+            <p className="text-2xl font-semibold">{openBoard?.length || 17}</p>
             <p className="text-white/60">open needs</p>
           </div>
           <div>
@@ -61,6 +62,27 @@ export default function IndustryDashboard() {
           </div>
         )}
       </section>
+
+      {opportunities.length > 0 ? (
+        <section className="mt-8 max-w-xl">
+          <h2 className="text-sm font-semibold tracking-[0.14em] text-muted uppercase">Open board</h2>
+          <ul className="mt-3 space-y-2">
+            {opportunities.map((problem) => (
+              <li key={problem.id} className="rounded-2xl border border-line bg-card px-4 py-3 text-sm">
+                <span className="font-medium">{problem.title}</span>
+                <span className="mt-1 block text-muted">
+                  {problem.district} · {problem.domain || problem.category} ·{" "}
+                  {problem.universityName
+                    || (problem.suggestedUniversityName
+                      ? `Suggested: ${problem.suggestedUniversityName}`
+                      : "Unassigned")}
+                  {problem.suggestedDepartment ? ` · ${problem.suggestedDepartment}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {history.length > 0 ? (
         <section className="mt-8 max-w-xl">

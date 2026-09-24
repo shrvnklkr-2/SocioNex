@@ -1,21 +1,116 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
-import { buildProblem, hashPassword, sessionUser, slugify, uid } from "../data/logic"
-import { createInitialState, DEMO_PASSWORD, DEMO_USERS } from "../data/seed"
+import { api as http, mapApiChallenge, mapApiUniversity } from "../api"
+import { buildProblem, hashPassword, matchRecommendations, sessionUser, slugify, uid } from "../data/logic"
+import { createInitialState, DEMO_PASSWORD, DEMO_USERS, INSTITUTIONS } from "../data/seed"
 
 const KEY = "socionex-workspace-v1"
 const StoreContext = createContext(null)
 
+function enrichUniversity(row) {
+  const mapped = mapApiUniversity(row)
+  const seed =
+    INSTITUTIONS.find((item) => item.name === mapped.name) ||
+    INSTITUTIONS.find((item) => item.id === mapped.id)
+  if (!seed) return mapped
+  return {
+    ...mapped,
+    depts: seed.depts?.length ? seed.depts : mapped.depts,
+    faculty: seed.faculty?.length ? seed.faculty : mapped.faculty,
+    expertise: mapped.expertise?.length ? mapped.expertise : seed.expertise,
+    type: seed.type || mapped.type,
+    location: mapped.location || seed.location,
+    about: mapped.about || seed.about,
+  }
+}
+
+function fillMatchHints(problem, institutions) {
+  if (!problem?.domain || !institutions?.length) return problem
+  if (problem.suggestedDepartment && problem.suggestedFaculty && problem.suggestedUniversityName) {
+    return problem
+  }
+  const pool = problem.suggestedUniversityId || problem.suggestedUniversityName
+    ? institutions.filter(
+        (item) =>
+          item.id === problem.suggestedUniversityId ||
+          item.name === problem.suggestedUniversityName ||
+          item.id === problem.universityId ||
+          item.name === problem.universityName,
+      )
+    : institutions
+  const top = matchRecommendations(problem.domain, pool.length ? pool : institutions, 1)[0]
+  if (!top) return problem
+  return {
+    ...problem,
+    suggestedUniversityId: problem.suggestedUniversityId || top.universityId,
+    suggestedUniversityName: problem.suggestedUniversityName || top.universityName,
+    suggestedDepartment: problem.suggestedDepartment || top.department,
+    suggestedFaculty: problem.suggestedFaculty || top.facultyName,
+    suggestedFacultyTitle: problem.suggestedFacultyTitle || top.facultyTitle,
+  }
+}
+
+function mergeChallenges(apiProblems, localProblems, institutions) {
+  const localById = new Map(localProblems.map((item) => [String(item.id), item]))
+  const merged = apiProblems.map((api) => {
+    const local = localById.get(String(api.id))
+    localById.delete(String(api.id))
+    const early = ["submitted", "in_validation", "rejected"].includes(api.status)
+    const next = {
+      ...api,
+      suggestedUniversityId: local?.suggestedUniversityId || api.suggestedUniversityId,
+      suggestedUniversityName: local?.suggestedUniversityName || api.suggestedUniversityName,
+      suggestedDepartment: local?.suggestedDepartment || api.suggestedDepartment,
+      suggestedFaculty: local?.suggestedFaculty || api.suggestedFaculty,
+      suggestedFacultyTitle: local?.suggestedFacultyTitle || api.suggestedFacultyTitle,
+      feedback: local?.feedback ?? api.feedback,
+      duplicateOf: local?.duplicateOf ?? api.duplicateOf,
+      duplicateTitle: local?.duplicateTitle ?? api.duplicateTitle,
+      universityId: early ? null : local?.universityId || api.universityId,
+      universityName: early ? null : local?.universityName || api.universityName,
+      industryId: local?.industryId || api.industryId,
+      industryName: local?.industryName || api.industryName,
+      industryStatus: local?.industryStatus || api.industryStatus,
+      note: local?.note && !String(local.note).startsWith("Mock classifier")
+        ? local.note
+        : api.note || local?.note || "",
+    }
+    return fillMatchHints(next, institutions)
+  })
+  const leftovers = [...localById.values()]
+    .filter((item) => !/^\d+$/.test(String(item.id)))
+    .map((item) => fillMatchHints(item, institutions))
+  return [...merged, ...leftovers]
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(KEY)
-    if (!raw) return createInitialState()
+    if (!raw) {
+      const fresh = createInitialState()
+      return {
+        ...fresh,
+        problems: fresh.problems.map((item) => fillMatchHints(item, fresh.institutions)),
+      }
+    }
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed.problems) || !Array.isArray(parsed.institutions)) {
-      return createInitialState()
+      const fresh = createInitialState()
+      return {
+        ...fresh,
+        problems: fresh.problems.map((item) => fillMatchHints(item, fresh.institutions)),
+      }
     }
-    return { ...createInitialState(), ...parsed }
+    const merged = { ...createInitialState(), ...parsed }
+    return {
+      ...merged,
+      problems: merged.problems.map((item) => fillMatchHints(item, merged.institutions)),
+    }
   } catch {
-    return createInitialState()
+    const fresh = createInitialState()
+    return {
+      ...fresh,
+      problems: fresh.problems.map((item) => fillMatchHints(item, fresh.institutions)),
+    }
   }
 }
 
@@ -28,6 +123,49 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(state))
   }, [state])
+
+  const refreshFromApi = async () => {
+    try {
+      const [rows, unis, overview, categoryStats, statusStats, leaderboard, mapData, openBoard] = await Promise.all([
+        http.challenges(),
+        http.universities(),
+        http.overview(),
+        http.categoryStats(),
+        http.statusStats(),
+        http.leaderboard(),
+        http.mapData(),
+        http.openBoard(),
+      ])
+      setState((current) => {
+        const institutions =
+          Array.isArray(unis) && unis.length ? unis.map(enrichUniversity) : current.institutions
+        return {
+          ...current,
+          apiOnline: true,
+          problems: Array.isArray(rows)
+            ? mergeChallenges(rows.map(mapApiChallenge), current.problems, institutions)
+            : current.problems.map((item) => fillMatchHints(item, institutions)),
+          institutions,
+          overview,
+          categoryStats,
+          statusStats,
+          leaderboard,
+          mapData,
+          openBoard: Array.isArray(openBoard)
+            ? openBoard.map((row) => fillMatchHints(mapApiChallenge(row), institutions))
+            : [],
+        }
+      })
+      return true
+    } catch {
+      setState((current) => ({ ...current, apiOnline: false }))
+      return false
+    }
+  }
+
+  useEffect(() => {
+    refreshFromApi()
+  }, [])
 
   const api = useMemo(() => {
     const flash = (message) => {
@@ -53,14 +191,37 @@ export function StoreProvider({ children }) {
       ...state,
       toast,
       flash,
+      refreshFromApi,
       signIn(user) {
         setState((current) => ({ ...current, user }))
       },
       signOut() {
         setState((current) => ({ ...current, user: null }))
       },
-      login({ role, email, password }) {
+      async login({ role, email, password }) {
         const normalized = email.trim().toLowerCase()
+        try {
+          const data = await http.login({ email: normalized, password, role })
+          const demo = Object.values(DEMO_USERS).find(
+            (item) => item.role === data.role && item.email.toLowerCase() === normalized,
+          )
+          const user = demo
+            ? { ...demo, token: data.token, email: data.email || demo.email, org: data.org || demo.org }
+            : {
+                id: `api-${data.role}`,
+                role: data.role,
+                name: data.name,
+                email: data.email || normalized,
+                org: data.org || "",
+                token: data.token,
+                universityId: data.role === "university" ? data.org : undefined,
+                industryId: data.role === "industry" ? data.org : undefined,
+              }
+          setState((current) => ({ ...current, user }))
+          return { user }
+        } catch {
+          /* local demo fallback */
+        }
         const account = stateRef.current.accounts.find(
           (item) => item.email === normalized && item.role === role,
         )
@@ -84,8 +245,39 @@ export function StoreProvider({ children }) {
         }
         return { error: "No account matches that role, email, and password." }
       },
-      enter(partial) {
+      async enter(partial) {
         const email = partial.email.trim().toLowerCase()
+        try {
+          await http.register({
+            name: partial.name,
+            email,
+            password: partial.password,
+            role: partial.role,
+            org: partial.org || "",
+          })
+          const data = await http.login({ email, password: partial.password, role: partial.role })
+          const session = {
+            id: uid("u"),
+            ...partial,
+            email,
+            token: data.token,
+            name: data.name || partial.name,
+            role: data.role || partial.role,
+            universityId: partial.role === "university" ? uid("inst") : partial.universityId,
+            industryId: partial.role === "industry" ? uid("co") : partial.industryId,
+          }
+          delete session.password
+          setState((current) => ({
+            ...current,
+            user: session,
+            accounts: current.accounts.some((account) => account.email === email && account.role === session.role)
+              ? current.accounts
+              : [...current.accounts, { ...session, passwordHash: hashPassword(partial.password) }],
+          }))
+          return session
+        } catch {
+          /* local demo fallback */
+        }
         const existing = stateRef.current.accounts.find(
           (account) => account.email === email && account.role === partial.role,
         )
@@ -147,7 +339,53 @@ export function StoreProvider({ children }) {
         }))
         return session
       },
-      reportProblem(input) {
+      async reportProblem(input) {
+        try {
+          const classified = await http.createChallenge({
+            title: input.title,
+            description: input.description,
+            location: input.location,
+            district: input.district,
+            file: input.file,
+          })
+          const draft = {
+            ...buildProblem(input, stateRef.current.problems, stateRef.current.institutions),
+            id: String(classified.id),
+            domain: classified.category,
+            priority: String(classified.priority).toLowerCase(),
+            note: `Mock classifier confidence ${classified.confidence}`,
+          }
+          const rematched = buildProblem(
+            { ...input, domain: classified.category },
+            stateRef.current.problems,
+            stateRef.current.institutions,
+          )
+          draft.universityId = null
+          draft.universityName = null
+          draft.suggestedUniversityId = rematched.suggestedUniversityId
+          draft.suggestedUniversityName = classified.assigned_to || rematched.suggestedUniversityName
+          draft.suggestedDepartment = rematched.suggestedDepartment
+          draft.suggestedFaculty = rematched.suggestedFaculty
+          draft.suggestedFacultyTitle = rematched.suggestedFacultyTitle
+          Object.assign(draft, fillMatchHints(draft, stateRef.current.institutions))
+          const event = {
+            id: uid("e"),
+            at: draft.createdAt,
+            text: `${draft.ownerName} submitted “${draft.title}” in ${draft.district}. Classified as ${draft.domain}.`,
+            roles: ["government"],
+            userIds: [draft.ownerId],
+          }
+          setState((current) => ({
+            ...current,
+            problems: [draft, ...current.problems.filter((item) => item.id !== draft.id)],
+            events: [event, ...current.events].slice(0, 30),
+          }))
+          flash(`Filed under ${draft.domain}`)
+          await refreshFromApi()
+          return draft
+        } catch {
+          /* local demo fallback */
+        }
         const draft = buildProblem(
           input,
           stateRef.current.problems,
@@ -173,15 +411,22 @@ export function StoreProvider({ children }) {
       },
       routeToUniversity(problemId, universityId) {
         const problem = requireProblem(problemId)
-        const university = stateRef.current.institutions.find((item) => item.id === universityId)
-        if (!problem || !university?.accepted) return
+        const university = stateRef.current.institutions.find((item) => item.id === universityId || item.name === universityId)
+        if (!problem || !university) return
+        const match = matchRecommendations(problem.domain, [university], 1)[0]
+        http.assignChallenge(problem.id, university.name).then(() => refreshFromApi()).catch(() => {})
         replaceProblem(
           {
             ...problem,
             status: "assigned",
             universityId: university.id,
             universityName: university.name,
-            note: "Routed by the department.",
+            suggestedUniversityId: university.id,
+            suggestedUniversityName: university.name,
+            suggestedDepartment: match?.department || problem.suggestedDepartment,
+            suggestedFaculty: match?.facultyName || problem.suggestedFaculty,
+            suggestedFacultyTitle: match?.facultyTitle || problem.suggestedFacultyTitle,
+            note: `Routed to ${university.name}${match?.department ? ` · ${match.department}` : ""}${match?.facultyName ? ` · ${match.facultyName}` : ""}.`,
           },
           {
             id: uid("e"),
@@ -290,27 +535,34 @@ export function StoreProvider({ children }) {
       requestProblem(problemId) {
         const problem = requireProblem(problemId)
         const user = stateRef.current.user
-        const institution = stateRef.current.institutions.find((item) => item.id === user?.universityId)
-        if (!problem || !institution?.accepted) {
+        const institution = stateRef.current.institutions.find(
+          (item) => item.id === user?.universityId || item.name === user?.org || item.name === user?.universityId,
+        )
+        if (!problem) return
+        http
+          .requestBoard({ challenge_id: Number(problem.id), university: institution?.name || user?.org || "" })
+          .then((result) => {
+            flash(result.message || `Request sent · fit ${result.fit_score}`)
+            refreshFromApi()
+          })
+          .catch(() => flash("Request sent to the department"))
+        if (!institution && !stateRef.current.apiOnline) {
           flash("The department still has to approve this campus")
           return
         }
-        if (problem.universityId) {
-          flash("Another campus is already on this brief")
-          return
-        }
+        const campusName = institution?.name || user?.org || "Campus"
         replaceProblem(
           {
             ...problem,
             status: "requested",
-            universityId: institution.id,
-            universityName: institution.name,
+            universityId: institution?.id || campusName,
+            universityName: campusName,
             note: "Campus requested this brief.",
           },
           {
             id: uid("e"),
             at: new Date().toISOString(),
-            text: `${institution.name} requested “${problem.title}”.`,
+            text: `${campusName} requested “${problem.title}”.`,
             roles: ["government", "university"],
             userIds: [problem.ownerId],
           },
@@ -390,6 +642,7 @@ export function StoreProvider({ children }) {
             progress,
             status: completed ? "completed" : "collaborating",
             note: completed ? "Marked deployed by the campus team." : "Pilot checkpoint recorded.",
+            feedback: completed ? problem.feedback ?? null : problem.feedback,
           },
           {
             id: uid("e"),
@@ -401,7 +654,31 @@ export function StoreProvider({ children }) {
             userIds: [problem.ownerId],
           },
         )
-        flash(completed ? "Marked deployed" : "Pilot checkpoint saved")
+        flash(completed ? "Marked deployed — ask the citizen for feedback" : "Pilot checkpoint saved")
+      },
+      submitFeedback(problemId, payload) {
+        const problem = requireProblem(problemId)
+        if (!problem || problem.status !== "completed") return
+        const rating = Number(payload?.rating) || 0
+        if (rating < 1 || rating > 5) return
+        replaceProblem(
+          {
+            ...problem,
+            feedback: {
+              rating,
+              comment: String(payload?.comment || "").trim(),
+              at: new Date().toISOString(),
+            },
+          },
+          {
+            id: uid("e"),
+            at: new Date().toISOString(),
+            text: `${problem.ownerName} rated “${problem.title}” ${rating}/5.`,
+            roles: ["university", "government"],
+            userIds: [problem.ownerId],
+          },
+        )
+        flash("Feedback saved")
       },
       acceptInstitution(id) {
         setState((current) => ({
@@ -443,11 +720,25 @@ export function StoreProvider({ children }) {
         if (!clean) return
         setState((current) => ({
           ...current,
-          institutions: current.institutions.map((item) =>
-            item.id === id && !item.faculty.includes(clean)
-              ? { ...item, faculty: [...item.faculty, clean] }
-              : item,
-          ),
+          institutions: current.institutions.map((item) => {
+            if (item.id !== id) return item
+            const names = item.faculty.map((entry) =>
+              typeof entry === "string" ? entry : entry.name,
+            )
+            if (names.includes(clean)) return item
+            return {
+              ...item,
+              faculty: [
+                ...item.faculty,
+                {
+                  name: clean,
+                  title: "Faculty",
+                  department: item.depts?.[0] || "General",
+                  focus: item.expertise?.slice(0, 2) || [],
+                },
+              ],
+            }
+          }),
         }))
       },
       reset() {

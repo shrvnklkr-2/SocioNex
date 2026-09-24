@@ -1,16 +1,24 @@
-# React + Vite
+# SocioNex
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Tailwind frontend with a FastAPI mock backend for hackathon demos. There is no real AI, vector search, or external model API. Classification, matching, and confidence scores are random or static.
 
-Currently, two official plugins are available:
+## Frontend
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+## Mock backend
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 8001
+```
 
-## Expanding the Oxlint configuration
+API docs: http://127.0.0.1:8000/docs
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Vite proxies `/api` to the FastAPI server on port **8001**. Seed logins use password `demo123`, for example `asha.kumari@example.com` (citizen) and `hello@gramvikas.example` (community). Keep the backend running while you use the React app.

@@ -1,0 +1,355 @@
+from models import Challenge, Milestone, Organization, University, User
+
+USERS = [
+    {"name": "Asha Kumari", "email": "asha.kumari@example.com", "role": "citizen", "org": ""},
+    {"name": "Gram Vikas Samiti", "email": "hello@gramvikas.example", "role": "community", "org": "Gram Vikas Samiti"},
+    {"name": "Dr. Meera Kujur", "email": "meera.kujur@cuj.ac.in", "role": "university", "org": "Central University of Jharkhand"},
+    {"name": "Rohan Sen", "email": "rohan.sen@bosch.example", "role": "industry", "org": "Bosch India"},
+    {"name": "Innovation Cell", "email": "innovation@jharkhand.gov.in", "role": "government", "org": "Government of Jharkhand"},
+    {"name": "Ravi Oraon", "email": "ravi.oraon@example.com", "role": "citizen", "org": ""},
+    {"name": "John Doe", "email": "john.doe@example.com", "role": "community", "org": "Ranchi Ward Forum"},
+    {"name": "Dr. Ananya Mishra", "email": "ananya.mishra@nitjsr.ac.in", "role": "university", "org": "NIT Jamshedpur"},
+    {"name": "Kavita Sinha", "email": "kavita.sinha@tatatrusts.example", "role": "industry", "org": "Tata Trusts"},
+    {"name": "Block Officer Dumka", "email": "block.dumka@jharkhand.gov.in", "role": "government", "org": "Dumka District"},
+]
+
+UNIVERSITIES = [
+    {"name": "IIT Bombay", "location": "Mumbai", "expertise": "Environment, Water resources", "reason": "Strong environmental engineering department", "score": 95},
+    {"name": "VJTI", "location": "Mumbai", "expertise": "Urban development", "reason": "Urban infrastructure expertise", "score": 89},
+    {"name": "Central University of Jharkhand", "location": "Ranchi", "expertise": "Education, Public administration", "reason": "Community and education studios", "score": 91},
+    {"name": "Birsa Agricultural University", "location": "Ranchi", "expertise": "Agriculture, Water resources", "reason": "Field labs for crops and rural water", "score": 93},
+    {"name": "NIT Jamshedpur", "location": "Jamshedpur", "expertise": "Urban development, Energy", "reason": "Civic infrastructure labs", "score": 88},
+    {"name": "RIMS Ranchi", "location": "Ranchi", "expertise": "Healthcare, Sanitation", "reason": "Community medicine practice", "score": 90},
+    {"name": "IIT (ISM) Dhanbad", "location": "Dhanbad", "expertise": "Energy, Environment", "reason": "Mining environment and water systems", "score": 92},
+    {"name": "Ranchi University", "location": "Ranchi", "expertise": "Public administration, Education", "reason": "District administration cohorts", "score": 78},
+    {"name": "BIT Mesra", "location": "Ranchi", "expertise": "Energy, Accessibility", "reason": "Applied engineering studios", "score": 84},
+    {"name": "XLRI Jamshedpur", "location": "Jamshedpur", "expertise": "Rural livelihoods, Public administration", "reason": "Livelihood and CSR programmes", "score": 81},
+]
+
+ORGANIZATIONS = [
+    {"name": "Mahindra Rise", "kind": "Mentorship", "place": "Jamshedpur"},
+    {"name": "Tata Trusts", "kind": "Sponsor", "place": "Jamshedpur"},
+    {"name": "Bosch India", "kind": "Resources", "place": "Jamshedpur"},
+    {"name": "Gram Vikas Samiti", "kind": "Community NGO", "place": "Khunti"},
+    {"name": "Jharkhand Innovation Cell", "kind": "Government", "place": "Ranchi"},
+]
+
+CHALLENGES = [
+    {
+        "title": "Primary school toilets locked in Masalia",
+        "description": "Two government primary schools in Masalia have toilets locked since the monsoon.",
+        "category": "Sanitation",
+        "priority": "High",
+        "status": "in_validation",
+        "district": "Dumka",
+        "location": "Masalia block",
+        "assigned_to": "RIMS Ranchi",
+        "confidence": 0.91,
+        "progress": 15,
+        "owner_email": "asha.kumari@example.com",
+    },
+    {
+        "title": "Vegetables spoil before they leave the Godda haat",
+        "description": "Growers lose tomatoes and leafy greens within a day and need a small cold store.",
+        "category": "Agriculture",
+        "priority": "Medium",
+        "status": "in_progress",
+        "district": "Godda",
+        "location": "Godda haat",
+        "assigned_to": "Birsa Agricultural University",
+        "confidence": 0.88,
+        "progress": 42,
+        "owner_email": "ravi.oraon@example.com",
+    },
+    {
+        "title": "Lac farmers in Latehar cannot reach a steady buyer",
+        "description": "Households tapping lac sell to whoever arrives on the road.",
+        "category": "Rural livelihoods",
+        "priority": "Medium",
+        "status": "assigned",
+        "district": "Latehar",
+        "location": "Mahuadanr",
+        "assigned_to": "Central University of Jharkhand",
+        "confidence": 0.84,
+        "progress": 28,
+        "owner_email": "hello@gramvikas.example",
+    },
+    {
+        "title": "Girls leaving school after Class 8 in Murhu",
+        "description": "Secondary school is 7 km away and the last shared jeep leaves early.",
+        "category": "Education",
+        "priority": "High",
+        "status": "assigned",
+        "district": "Khunti",
+        "location": "Murhu",
+        "assigned_to": "Central University of Jharkhand",
+        "confidence": 0.9,
+        "progress": 22,
+        "owner_email": "ravi.oraon@example.com",
+    },
+    {
+        "title": "Paddy nurseries washed out after unseasonal rain",
+        "description": "Nurseries in Katkamsandi were lost in two nights of rain.",
+        "category": "Agriculture",
+        "priority": "High",
+        "status": "assigned",
+        "district": "Hazaribagh",
+        "location": "Katkamsandi",
+        "assigned_to": "Birsa Agricultural University",
+        "confidence": 0.93,
+        "progress": 35,
+        "owner_email": "hello@gramvikas.example",
+    },
+    {
+        "title": "No night ambulance from Kiriburu to the district hospital",
+        "description": "Families hire private vehicles after 8 pm. Two maternal cases waited more than three hours.",
+        "category": "Healthcare",
+        "priority": "High",
+        "status": "in_progress",
+        "district": "West Singhbhum",
+        "location": "Kiriburu",
+        "assigned_to": "RIMS Ranchi",
+        "confidence": 0.95,
+        "progress": 48,
+        "owner_email": "ravi.oraon@example.com",
+    },
+    {
+        "title": "Handpumps dry across Palkot hamlets",
+        "description": "Four handpumps have yielded nothing since June.",
+        "category": "Water resources",
+        "priority": "High",
+        "status": "in_progress",
+        "district": "Gumla",
+        "location": "Palkot",
+        "assigned_to": "Birsa Agricultural University",
+        "confidence": 0.94,
+        "progress": 61,
+        "owner_email": "asha.kumari@example.com",
+    },
+    {
+        "title": "Ward 14 lanes go dark after 9 pm",
+        "description": "Eleven poles fail every evening. The ward asked for a repair map.",
+        "category": "Urban development",
+        "priority": "Medium",
+        "status": "completed",
+        "district": "Ranchi",
+        "location": "Ward 14",
+        "assigned_to": "NIT Jamshedpur",
+        "confidence": 0.87,
+        "progress": 100,
+        "owner_email": "asha.kumari@example.com",
+    },
+    {
+        "title": "Mine dust settles on classrooms in Jharia",
+        "description": "Teachers wipe desks twice a day. Parents want a low-cost filter and planting strip.",
+        "category": "Environment",
+        "priority": "High",
+        "status": "in_validation",
+        "district": "Dhanbad",
+        "location": "Jharia",
+        "assigned_to": "IIT (ISM) Dhanbad",
+        "confidence": 0.89,
+        "progress": 10,
+        "owner_email": "john.doe@example.com",
+    },
+    {
+        "title": "Solar pumps idle because no one services them",
+        "description": "Three solar pumps in Chatra sit unused after a fuse failed.",
+        "category": "Energy",
+        "priority": "Medium",
+        "status": "assigned",
+        "district": "Chatra",
+        "location": "Hunterganj",
+        "assigned_to": "BIT Mesra",
+        "confidence": 0.82,
+        "progress": 20,
+        "owner_email": "block.dumka@jharkhand.gov.in",
+    },
+    {
+        "title": "PHC ramp is too steep for a wheelchair",
+        "description": "The only public ramp at the PHC cannot be used independently.",
+        "category": "Accessibility",
+        "priority": "High",
+        "status": "in_progress",
+        "district": "Ramgarh",
+        "location": "Ramgarh PHC",
+        "assigned_to": "BIT Mesra",
+        "confidence": 0.86,
+        "progress": 40,
+        "owner_email": "asha.kumari@example.com",
+    },
+    {
+        "title": "Ration cards stuck without a local help desk",
+        "description": "Elderly residents travel to the subdivisional office three times for one correction.",
+        "category": "Public administration",
+        "priority": "Medium",
+        "status": "in_validation",
+        "district": "Palamu",
+        "location": "Medininagar",
+        "assigned_to": "Ranchi University",
+        "confidence": 0.8,
+        "progress": 8,
+        "owner_email": "john.doe@example.com",
+    },
+    {
+        "title": "Community pond silted in Simdega",
+        "description": "The village pond no longer holds water through April.",
+        "category": "Water resources",
+        "priority": "High",
+        "status": "assigned",
+        "district": "Simdega",
+        "location": "Thethaitangar",
+        "assigned_to": "IIT Bombay",
+        "confidence": 0.92,
+        "progress": 18,
+        "owner_email": "hello@gramvikas.example",
+    },
+    {
+        "title": "Street vendors have no safe night lighting on MG Road",
+        "description": "Vendors pack up at dusk because the stretch has no working lights.",
+        "category": "Urban development",
+        "priority": "Low",
+        "status": "in_validation",
+        "district": "East Singhbhum",
+        "location": "Jamshedpur MG Road",
+        "assigned_to": "VJTI",
+        "confidence": 0.77,
+        "progress": 5,
+        "owner_email": "ravi.oraon@example.com",
+    },
+    {
+        "title": "Anganwadi kitchen lacks a smokeless stove",
+        "description": "Smoke fills the room during midday meals.",
+        "category": "Energy",
+        "priority": "Medium",
+        "status": "completed",
+        "district": "Lohardaga",
+        "location": "Kuru",
+        "assigned_to": "BIT Mesra",
+        "confidence": 0.83,
+        "progress": 100,
+        "owner_email": "hello@gramvikas.example",
+    },
+    {
+        "title": "Open drain along the school wall in Deoghar",
+        "description": "Children walk beside an uncovered drain every morning.",
+        "category": "Sanitation",
+        "priority": "High",
+        "status": "in_progress",
+        "district": "Deoghar",
+        "location": "Ward 6",
+        "assigned_to": "RIMS Ranchi",
+        "confidence": 0.9,
+        "progress": 55,
+        "owner_email": "block.dumka@jharkhand.gov.in",
+    },
+    {
+        "title": "Mango growers lose the early harvest to bruising",
+        "description": "Crates are stacked too high on pickup trucks from Pakur.",
+        "category": "Agriculture",
+        "priority": "Low",
+        "status": "assigned",
+        "district": "Pakur",
+        "location": "Littipara",
+        "assigned_to": "Birsa Agricultural University",
+        "confidence": 0.79,
+        "progress": 25,
+        "owner_email": "ravi.oraon@example.com",
+    },
+    {
+        "title": "No drinking water kiosk at the Dumka bus stand",
+        "description": "Passengers buy sealed bottles or go without during summer.",
+        "category": "Water resources",
+        "priority": "Medium",
+        "status": "in_validation",
+        "district": "Dumka",
+        "location": "Dumka bus stand",
+        "assigned_to": "IIT Bombay",
+        "confidence": 0.85,
+        "progress": 12,
+        "owner_email": "john.doe@example.com",
+    },
+    {
+        "title": "Weavers in Kharsawan need a shared dye bath",
+        "description": "Colour work is done in household courtyards and stains wells.",
+        "category": "Rural livelihoods",
+        "priority": "Medium",
+        "status": "in_progress",
+        "district": "Seraikela-Kharsawan",
+        "location": "Kharsawan",
+        "assigned_to": "XLRI Jamshedpur",
+        "confidence": 0.81,
+        "progress": 37,
+        "owner_email": "hello@gramvikas.example",
+    },
+    {
+        "title": "Malaria test kits run out before the monsoon ends",
+        "description": "The sub-centre in Sahebganj reports empty kits by the second week of each month.",
+        "category": "Healthcare",
+        "priority": "High",
+        "status": "assigned",
+        "district": "Sahebganj",
+        "location": "Barharwa",
+        "assigned_to": "RIMS Ranchi",
+        "confidence": 0.92,
+        "progress": 30,
+        "owner_email": "kavita.sinha@tatatrusts.example",
+    },
+]
+
+MILESTONE_SETS = {
+    "in_validation": [
+        ("Submitted", "Completed"),
+        ("Site Visit", "Pending"),
+        ("Prototype Design", "Pending"),
+        ("Pilot", "Pending"),
+    ],
+    "assigned": [
+        ("Submitted", "Completed"),
+        ("Site Visit", "Completed"),
+        ("Prototype Design", "Pending"),
+        ("Pilot", "Pending"),
+    ],
+    "in_progress": [
+        ("Submitted", "Completed"),
+        ("Site Visit", "Completed"),
+        ("Prototype Design", "In Progress"),
+        ("Pilot", "Pending"),
+    ],
+    "completed": [
+        ("Submitted", "Completed"),
+        ("Site Visit", "Completed"),
+        ("Prototype Design", "Completed"),
+        ("Pilot", "Completed"),
+    ],
+}
+
+
+def seed_if_empty(db):
+    if db.query(User).count():
+        return
+
+    users = {}
+    for row in USERS:
+        user = User(password="demo123", **row)
+        db.add(user)
+        db.flush()
+        users[user.email] = user
+
+    for row in UNIVERSITIES:
+        db.add(University(**row))
+
+    for row in ORGANIZATIONS:
+        db.add(Organization(**row))
+
+    for row in CHALLENGES:
+        owner = users.get(row["owner_email"])
+        payload = {key: value for key, value in row.items() if key != "owner_email"}
+        challenge = Challenge(owner_id=owner.id if owner else None, **payload)
+        db.add(challenge)
+        db.flush()
+        steps = MILESTONE_SETS.get(challenge.status, MILESTONE_SETS["in_validation"])
+        for index, (title, status) in enumerate(steps):
+            db.add(Milestone(challenge_id=challenge.id, title=title, status=status, sort_order=index))
+
+    db.commit()

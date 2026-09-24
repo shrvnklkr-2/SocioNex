@@ -9,6 +9,7 @@ import { useStore } from "../context/Store"
 const LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/live-demo", label: "Live demo" },
+  { to: "/pose", label: "Pose track" },
   { to: "/features", label: "Features" },
   { to: "/impact", label: "Impact" },
 ]
