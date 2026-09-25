@@ -309,7 +309,64 @@ export function StoreProvider({ children }) {
           })
           return { user }
         } catch {
-          /* fall through to local accounts */
+          /* fall through to local / default accounts */
+        }
+        const defaults = {
+          citizen: {
+            email: "rakesh.mahato@example.com",
+            password: "demo123",
+            name: "Rakesh Mahato",
+            org: "",
+          },
+          community: {
+            email: "hello@gramvikas.example",
+            password: "demo123",
+            name: "Gram Vikas Samiti",
+            org: "Gram Vikas Samiti",
+          },
+          university: {
+            email: "coordinator@bitmesra-innovation.example.edu",
+            password: "demo123",
+            name: "BIT Mesra Innovation Cell",
+            org: "BIT Mesra",
+          },
+          industry: {
+            email: "partnerships@mahindrarise.example.com",
+            password: "demo123",
+            name: "Mahindra Rise Partnerships",
+            org: "Mahindra Rise",
+          },
+          government: {
+            email: "gov@jharkhand.gov.in",
+            password: "demo123",
+            name: "Jharkhand Innovation Cell",
+            org: "Government of Jharkhand",
+          },
+        }
+        const demo = defaults[role]
+        if (demo && demo.email === normalized && password === demo.password) {
+          const user = {
+            id: `demo-${role}-${normalized}`,
+            role,
+            name: demo.name,
+            email: demo.email,
+            org: demo.org,
+            universityId: role === "university" ? demo.org : undefined,
+            industryId: role === "industry" ? demo.org : undefined,
+          }
+          setState((current) => {
+            let institutions = current.institutions
+            if (user.role === "university") {
+              const campus = campusProfileFromUser(user, {}, { pendingApproval: false })
+              institutions = upsertInstitution(institutions, {
+                ...(institutions.find((item) => sameCampus(item, campus)) || {}),
+                ...campus,
+                accepted: true,
+              })
+            }
+            return { ...current, user, institutions, apiOnline: false }
+          })
+          return { user }
         }
         const account = stateRef.current.accounts.find(
           (item) => item.email === normalized && item.role === role,
@@ -325,7 +382,7 @@ export function StoreProvider({ children }) {
         if (account && !account.passwordHash) {
           return { error: "This account has no password yet. Create it again from Register." }
         }
-        return { error: "No account matches that role, email, and password." }
+        return { error: "No account matches that role, email, and password. Is the backend running on port 8001?" }
       },
       async enter(partial) {
         const email = partial.email.trim().toLowerCase()
