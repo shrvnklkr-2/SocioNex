@@ -103,22 +103,21 @@ export default function ReportProblem() {
         Signed in as {user.name}. Add the place and what is failing. Photographs and short videos can ride along as file names in this demo.
       </p>
       <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-[28px] border border-line bg-card p-5 sm:p-6">
-        <Input label="Title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="Handpumps dry in Palkot hamlets" />
-        <TextArea label="What is happening" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={800} placeholder="Who is affected, since when, and what you have already tried." />
+        <Input label="Title *" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="Handpumps dry in Palkot hamlets" required />
+        <div>
+          <TextArea label="Describe the challenge *" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={800} placeholder="Who is affected, since when, and what you have already tried. Provide as much detail as possible." required rows={5} />
+          <p className={`mt-1 text-xs ${description.trim().length >= 30 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"}`}>
+            {description.trim().length}/800 characters (minimum 30 required)
+          </p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Select label="District" value={district} onChange={(event) => setDistrict(event.target.value)}>
+          <Select label="District *" value={district} onChange={(event) => setDistrict(event.target.value)} required>
             {DISTRICTS.map((item) => (
               <option key={item}>{item}</option>
             ))}
           </Select>
           <Input label="Village, block, or ward" value={location} onChange={(event) => setLocation(event.target.value)} />
         </div>
-        <Select label="Domain hint" value={domain} onChange={(event) => setDomain(event.target.value)} hint="Leave this on automatic and the demo classifier will choose.">
-          <option value="">Classify for me</option>
-          {DOMAINS.map((item) => (
-            <option key={item}>{item}</option>
-          ))}
-        </Select>
         <label className="block text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">
           Photographs, video, or documents
           <input

@@ -15,7 +15,6 @@ import {
   ArrowUpRight,
 } from "lucide-react"
 import { EcosystemMap } from "../components/EcosystemMap"
-import { MomentumChart } from "../components/Charts"
 import { SpotlightCarousel } from "../components/SpotlightCarousel"
 import { useTitle } from "../components/ui"
 
@@ -367,42 +366,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* MOMENTUM & LISTENING SUB-SECTION */}
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <article className="rounded-3xl border border-emerald-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="font-display text-2xl text-slate-900 dark:text-white">Momentum is measurable.</h3>
-                <p className="mt-1 text-xs text-slate-500">Submission and resolution velocity · last 6 months</p>
-              </div>
-              <Link to="/impact" className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-300">
-                Analytics
-              </Link>
-            </div>
-            <div className="mt-4 flex gap-4 text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-emerald-600" /> Submitted</span>
-              <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-teal-500" /> Resolved</span>
-            </div>
-            <div className="mt-4">
-              <MomentumChart />
-            </div>
-          </article>
 
-          <article className="flex flex-col justify-between rounded-3xl bg-emerald-950 p-6 text-white shadow-xl dark:bg-emerald-950">
-            <div>
-              <span className="text-[11px] font-bold tracking-[0.2em] text-emerald-400 uppercase">JOIN THE MOVEMENT</span>
-              <h3 className="mt-3 font-display text-3xl leading-tight font-normal">
-                The next solution could begin with you.
-              </h3>
-            </div>
-            <Link
-              to="/report"
-              className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-bold text-emerald-950 transition-transform hover:scale-105"
-            >
-              Report a challenge <ArrowRight className="h-4 w-4" />
-            </Link>
-          </article>
-        </div>
       </section>
     </div>
   )

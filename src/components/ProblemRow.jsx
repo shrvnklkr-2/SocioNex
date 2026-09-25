@@ -108,7 +108,9 @@ export function ProblemRow({ problem, defaultOpen = false, children, onFeedback 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">{detail.title}</h3>
-            <StatusPill status={detail.status} label={STATUS_LABEL[detail.status] || detail.status} />
+            {!["submitted", "in_validation"].includes(detail.status) && (
+              <StatusPill status={detail.status} label={STATUS_LABEL[detail.status] || detail.status} />
+            )}
           </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {detail.district}

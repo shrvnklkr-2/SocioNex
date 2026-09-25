@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { ListeningCard, MomentumChart } from "../components/Charts"
 import { DashboardFrame } from "../components/DashboardFrame"
@@ -17,7 +17,7 @@ const NAV = [
   { id: "all", label: "All problems" },
   { id: "inbox", label: "Accept or reject" },
   { id: "tracking", label: "Tracking" },
-  { id: "partners", label: "University collaboration" },
+  { id: "partners", label: "Industry collaboration" },
 ]
 
 function PartnerCard({ partner, onJoin }) {
@@ -51,17 +51,17 @@ export default function UniversityDashboard() {
   const institution = institutions.find((item) => item.id === user.universityId)
     || institutions.find((item) => item.name === user.org)
     || {
-      id: user.org || "campus",
-      name: user.org || user.name,
-      type: "Campus",
-      location: "",
-      about: "",
-      expertise: [],
-      depts: [],
-      faculty: [],
-      accepted: true,
-      declined: false,
-    }
+    id: user.org || "campus",
+    name: user.org || user.name,
+    type: "Campus",
+    location: "",
+    about: "",
+    expertise: [],
+    depts: [],
+    faculty: [],
+    accepted: true,
+    declined: false,
+  }
   const [view, setView] = useState("overview")
   const [about, setAbout] = useState(institution?.about || "")
   const [dept, setDept] = useState("")
@@ -98,7 +98,7 @@ export default function UniversityDashboard() {
   }
 
   const sidebar = (
-    <aside className="lg:w-60 lg:shrink-0 sticky top-20 z-20">
+    <aside className="flex flex-col h-full w-full">
       <label className="mb-3 block text-sm lg:hidden">
         <span className="mb-1 block text-xs font-bold tracking-[0.14em] text-emerald-700 uppercase dark:text-emerald-400">Section</span>
         <select value={view} onChange={(event) => setView(event.target.value)} className="w-full rounded-2xl border-2 border-emerald-500 bg-white dark:bg-slate-900 dark:border-emerald-600 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white shadow-[0_0_15px_rgba(16,185,129,0.2)] outline-none focus:border-emerald-500">
@@ -107,7 +107,7 @@ export default function UniversityDashboard() {
           ))}
         </select>
       </label>
-      <nav className="hidden rounded-[24px] border-2 border-emerald-500 bg-white/95 dark:bg-slate-900/95 p-3.5 shadow-[0_0_20px_rgba(16,185,129,0.25)] lg:block space-y-1.5">
+      <nav className="hidden lg:flex lg:flex-col flex-1 space-y-1.5">
         <div className="px-3 py-1.5 text-xs font-bold tracking-widest text-emerald-800 dark:text-emerald-400 uppercase border-b border-emerald-200 dark:border-emerald-800/80 mb-2 pb-2">
           Menu Navigation
         </div>
@@ -118,11 +118,10 @@ export default function UniversityDashboard() {
               key={item.id}
               type="button"
               onClick={() => setView(item.id)}
-              className={`group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-bold transition-all duration-200 ${
-                active
-                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30 border-2 border-emerald-400 translate-x-1"
-                  : "text-slate-700 dark:text-slate-200 border border-transparent hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-800 dark:hover:text-emerald-300 hover:translate-x-1"
-              }`}
+              className={`group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-bold transition-all duration-200 ${active
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30 border-2 border-emerald-400 translate-x-1"
+                : "text-slate-700 dark:text-slate-200 border border-transparent hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-800 dark:hover:text-emerald-300 hover:translate-x-1"
+                }`}
             >
               <span>{item.label}</span>
               <span className={`text-xs transition-transform duration-200 ${active ? "translate-x-0 opacity-100" : "opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"}`}>
@@ -168,11 +167,7 @@ export default function UniversityDashboard() {
             </article>
             <ListeningCard />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full">
-            {partners.slice(0, 3).map((partner) => (
-              <PartnerCard key={partner.id} partner={partner} onJoin={() => invite(partner.id)} />
-            ))}
-          </div>
+
         </div>
       ) : null}
 
@@ -268,7 +263,7 @@ export default function UniversityDashboard() {
           <p className="text-sm text-muted">Request an open brief. The department confirms it before work starts.</p>
           {suggestedForUs.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Suggested for your campus</p>
+              <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Matched challenges to other campus</p>
               {suggestedForUs.map((problem) => (
                 <ProblemRow key={`sug-${problem.id}`} problem={problem}>
                   <p className="mb-2 text-sm text-muted">
@@ -285,7 +280,7 @@ export default function UniversityDashboard() {
               <Button onClick={() => store.requestProblem(problem.id)}>Request this problem</Button>
             </ProblemRow>
           ))}
-          {problems.filter((item) => item.universityId && item.universityId !== user.universityId).slice(0, 4).map((problem) => (
+          {problems.filter((item) => item.universityId && item.universityId !== user.universityId).map((problem) => (
             <article key={problem.id} className="rounded-[24px] border border-line bg-card px-4 py-4 text-sm">
               <p className="font-medium">{problem.title}</p>
               <p className="mt-1 text-muted">{problem.district} · {STATUS_LABEL[problem.status]} · {problem.universityName}</p>
@@ -326,14 +321,66 @@ export default function UniversityDashboard() {
       {view === "tracking" ? (
         <div className="space-y-3">
           <h2 className="font-display text-3xl">Tracking</h2>
+          <p className="text-sm text-muted">Update the current stage of your accepted challenges.</p>
           {tracking.length === 0 ? <p className="text-sm text-muted">Accepted work will show its milestones here.</p> : null}
           {tracking.map((problem) => (
             <ProblemRow key={problem.id} problem={problem} defaultOpen>
               {problem.status !== "completed" && problem.status !== "rejected" ? (
-                <Button onClick={() => store.advance(problem.id)}>
-                  {problem.progress >= 1 ? "Mark deployed" : "Mark pilot checkpoint"}
-                </Button>
-              ) : null}
+                <div className="space-y-3">
+                  {/* Stage update dropdown */}
+                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/30 p-4">
+                    <label className="block text-[11px] font-bold tracking-[0.14em] text-emerald-700 dark:text-emerald-400 uppercase mb-2">
+                      Update Current Stage
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <select
+                        value={problem.status}
+                        onChange={(event) => {
+                          const next = event.target.value
+                          if (next === "completed") {
+                            // Advance until completed
+                            let steps = 2 - (problem.progress || 0)
+                            for (let i = 0; i < steps; i++) store.advance(problem.id)
+                          } else if (next === "collaborating" && problem.status === "in_progress") {
+                            store.advance(problem.id)
+                          }
+                        }}
+                        className="flex-1 rounded-xl border-2 border-emerald-400 dark:border-emerald-600 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-emerald-500 shadow-sm"
+                      >
+                        <option value="in_progress">🔄 In Progress</option>
+                        <option value="collaborating">🤝 Collaborating (Pilot)</option>
+                        <option value="completed">✅ Completed (Deployed)</option>
+                      </select>
+                      <Button onClick={() => store.advance(problem.id)}>
+                        {problem.progress >= 1 ? "Mark deployed →" : "Advance to next stage →"}
+                      </Button>
+                    </div>
+                    <div className="mt-3 flex items-center gap-4">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`h-2.5 w-2.5 rounded-full ${["in_progress", "collaborating", "completed"].includes(problem.status) ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">In Progress</span>
+                      </div>
+                      <div className="h-px flex-1 bg-emerald-200 dark:bg-emerald-800" />
+                      <div className="flex items-center gap-1.5">
+                        <div className={`h-2.5 w-2.5 rounded-full ${["collaborating", "completed"].includes(problem.status) ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Pilot</span>
+                      </div>
+                      <div className="h-px flex-1 bg-emerald-200 dark:bg-emerald-800" />
+                      <div className="flex items-center gap-1.5">
+                        <div className={`h-2.5 w-2.5 rounded-full ${problem.status === "completed" ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Deployed</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 p-3 flex items-center gap-2">
+                  <span className="text-emerald-600 dark:text-emerald-400">✅</span>
+                  <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                    {problem.status === "completed" ? "This challenge has been deployed" : "This challenge was returned"}
+                  </span>
+                </div>
+              )}
             </ProblemRow>
           ))}
         </div>
@@ -341,7 +388,7 @@ export default function UniversityDashboard() {
 
       {view === "partners" ? (
         <div className="space-y-4">
-          <h2 className="font-display text-3xl">University collaboration</h2>
+          <h2 className="font-display text-3xl">Industry collaboration</h2>
           <p className="text-sm text-muted">
             {active
               ? `An invite attaches to “${active.title}”.`

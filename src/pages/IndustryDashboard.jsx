@@ -20,7 +20,7 @@ export default function IndustryDashboard() {
   const opportunities = (openBoard?.length ? openBoard : problems).slice(0, 4)
 
   const sidebar = (
-    <aside className="lg:w-60 lg:shrink-0 sticky top-20 z-20">
+    <aside className="flex flex-col h-full w-full">
       <label className="mb-3 block text-sm lg:hidden">
         <span className="mb-1 block text-xs font-bold tracking-[0.14em] text-emerald-700 uppercase dark:text-emerald-400">Section</span>
         <select value={view} onChange={(event) => setView(event.target.value)} className="w-full rounded-2xl border-2 border-emerald-500 bg-white dark:bg-slate-900 dark:border-emerald-600 px-3.5 py-2.5 font-bold text-slate-900 dark:text-white shadow-[0_0_15px_rgba(16,185,129,0.2)] outline-none focus:border-emerald-500">
@@ -29,7 +29,7 @@ export default function IndustryDashboard() {
           ))}
         </select>
       </label>
-      <nav className="hidden rounded-[24px] border-2 border-emerald-500 bg-white/95 dark:bg-slate-900/95 p-3.5 shadow-[0_0_20px_rgba(16,185,129,0.25)] lg:block space-y-1.5">
+      <nav className="hidden lg:flex lg:flex-col flex-1 space-y-1.5">
         <div className="px-3 py-1.5 text-xs font-bold tracking-widest text-emerald-800 dark:text-emerald-400 uppercase border-b border-emerald-200 dark:border-emerald-800/80 mb-2 pb-2">
           Industry Desk
         </div>

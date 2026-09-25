@@ -9,7 +9,7 @@ export function Logo() {
           <path d="M16 10.5 L9.5 20 M16 10.5 L22.5 20 M11.5 22 H20.5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
         </svg>
       </span>
-      <span className="text-sm font-extrabold tracking-[0.25em] text-emerald-950 dark:text-white">SAHYOG</span>
+      <span className="text-sm font-extrabold tracking-[0.25em] text-emerald-950 dark:text-white">SOCIONEX</span>
     </span>
   )
 }
