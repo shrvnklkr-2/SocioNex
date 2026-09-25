@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { api } from "../api"
 import { useStore } from "../context/Store"
+import { useLanguage } from "../i18n/LanguageContext"
 import {
   formatDate,
   matchRecommendations,
@@ -41,8 +42,9 @@ function MatchCard({ problem }) {
   )
 }
 
-export function ProblemRow({ problem, defaultOpen = false, children, onFeedback }) {
+export function ProblemRow({ problem, defaultOpen = false, children, onFeedback, actions }) {
   const { institutions } = useStore()
+  const { t } = useLanguage()
   const [open, setOpen] = useState(defaultOpen)
   const [detail, setDetail] = useState(problem)
   const [milestones, setMilestones] = useState(milestonesFor(problem))
@@ -118,18 +120,21 @@ export function ProblemRow({ problem, defaultOpen = false, children, onFeedback 
           </p>
           <p className="mt-1 text-sm font-medium text-emerald-800 dark:text-emerald-300">{solverLine(detail)}</p>
         </div>
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((value) => !value)}
-          className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-            open
-              ? "border-emerald-600 bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-              : "border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-50"
-          }`}
-        >
-          {open ? "Hide status" : "Check status"}
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {actions}
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+            className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+              open
+                ? "border-emerald-600 bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+                : "border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-50"
+            }`}
+          >
+            {open ? t("common.hideStatus") : t("common.checkStatus")}
+          </button>
+        </div>
       </div>
       {open ? (
         <div className="border-t border-emerald-200/80 dark:border-slate-800 px-4 py-4 sm:px-6">

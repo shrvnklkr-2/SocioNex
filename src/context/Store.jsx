@@ -23,6 +23,72 @@ function enrichUniversity(row) {
   }
 }
 
+function sameCampus(a, b) {
+  if (!a || !b) return false
+  return (
+    String(a.id) === String(b.id)
+    || (a.name && b.name && a.name.trim().toLowerCase() === b.name.trim().toLowerCase())
+  )
+}
+
+function mergeInstitutions(apiList, localList) {
+  const local = Array.isArray(localList) ? localList : []
+  const api = Array.isArray(apiList) ? apiList : []
+  const merged = api.map((row) => {
+    const prev = local.find((item) => sameCampus(item, row))
+    if (!prev) return row
+    return {
+      ...row,
+      about: prev.about || row.about,
+      expertise: prev.expertise?.length ? prev.expertise : row.expertise,
+      depts: prev.depts?.length ? prev.depts : row.depts || [],
+      faculty: prev.faculty?.length ? prev.faculty : row.faculty || [],
+      accepted: prev.accepted ?? row.accepted,
+      declined: prev.declined ?? row.declined,
+      type: prev.type || row.type,
+      location: prev.location || row.location,
+    }
+  })
+  for (const item of local) {
+    if (!merged.some((row) => sameCampus(row, item))) merged.push(item)
+  }
+  return merged
+}
+
+function campusProfileFromUser(user, partial = {}, { pendingApproval = false } = {}) {
+  const name = partial.org || user?.org || user?.name || "Campus"
+  const id = user?.universityId || partial.universityId || name
+  return {
+    id,
+    name,
+    type: partial.type || "Higher education institution",
+    location: partial.location || "",
+    licence: partial.licence || "",
+    about: "",
+    expertise: [],
+    depts: [],
+    faculty: [],
+    accepted: !pendingApproval,
+    declined: false,
+  }
+}
+
+function upsertInstitution(list, next) {
+  const existing = list.find((item) => sameCampus(item, next))
+  if (!existing) return [...list, next]
+  return list.map((item) =>
+    sameCampus(item, next)
+      ? {
+          ...item,
+          ...next,
+          depts: next.depts ?? item.depts,
+          faculty: next.faculty ?? item.faculty,
+          expertise: next.expertise ?? item.expertise,
+        }
+      : item,
+  )
+}
+
 function fillMatchHints(problem, institutions) {
   if (!problem?.domain || !institutions?.length) return problem
   if (problem.suggestedDepartment && problem.suggestedFaculty && problem.suggestedUniversityName) {
@@ -70,6 +136,13 @@ function mergeChallenges(apiProblems, localProblems, institutions) {
       industryId: local?.industryId || api.industryId,
       industryName: local?.industryName || api.industryName,
       industryStatus: local?.industryStatus || api.industryStatus,
+      ownerId: api.ownerEmail ? api.ownerId : local?.ownerId || api.ownerId,
+      ownerName:
+        api.ownerName && api.ownerName !== "Filed on SocioNex"
+          ? api.ownerName
+          : local?.ownerName || api.ownerName,
+      ownerEmail: api.ownerEmail || local?.ownerEmail || "",
+      ownerRole: api.ownerEmail ? api.ownerRole : local?.ownerRole || api.ownerRole,
       note: local?.note && !String(local.note).startsWith("Mock classifier")
         ? local.note
         : api.note || local?.note || "",
@@ -137,8 +210,9 @@ export function StoreProvider({ children }) {
         http.openBoard(),
       ])
       setState((current) => {
-        const institutions =
-          Array.isArray(unis) && unis.length ? unis.map(enrichUniversity) : current.institutions
+        const fromApi =
+          Array.isArray(unis) && unis.length ? unis.map(enrichUniversity) : []
+        const institutions = mergeInstitutions(fromApi, current.institutions)
         return {
           ...current,
           apiOnline: true,
@@ -209,10 +283,30 @@ export function StoreProvider({ children }) {
             email: data.email || normalized,
             org: data.org || "",
             token: data.token,
-            universityId: data.role === "university" ? data.org : undefined,
-            industryId: data.role === "industry" ? data.org : undefined,
+            universityId:
+              data.role === "university" ? data.org || `api-uni-${normalized}` : undefined,
+            industryId: data.role === "industry" ? data.org || `api-ind-${normalized}` : undefined,
           }
-          setState((current) => ({ ...current, user }))
+          setState((current) => {
+            let institutions = current.institutions
+            if (user.role === "university") {
+              const campus = campusProfileFromUser(user)
+              const existing = institutions.find((item) => sameCampus(item, campus))
+              institutions = upsertInstitution(
+                institutions,
+                existing
+                  ? {
+                      ...campus,
+                      ...existing,
+                      id: existing.id || campus.id,
+                      accepted: existing.accepted,
+                      declined: existing.declined,
+                    }
+                  : { ...campus, accepted: false },
+              )
+            }
+            return { ...current, user, institutions }
+          })
           return { user }
         } catch {
           /* fall through to local accounts */
@@ -251,16 +345,32 @@ export function StoreProvider({ children }) {
             token: data.token,
             name: data.name || partial.name,
             role: data.role || partial.role,
-            universityId: partial.role === "university" ? uid("inst") : partial.universityId,
-            industryId: partial.role === "industry" ? uid("co") : partial.industryId,
+            universityId:
+              partial.role === "university"
+                ? partial.org || uid("inst")
+                : partial.universityId,
+            industryId:
+              partial.role === "industry" ? partial.org || uid("co") : partial.industryId,
           }
           delete session.password
+          const campus =
+            session.role === "university"
+              ? campusProfileFromUser(session, partial, { pendingApproval: true })
+              : null
           setState((current) => ({
             ...current,
             user: session,
             accounts: current.accounts.some((account) => account.email === email && account.role === session.role)
               ? current.accounts
               : [...current.accounts, { ...session, passwordHash: hashPassword(partial.password) }],
+            institutions: campus
+              ? upsertInstitution(current.institutions, {
+                  ...(current.institutions.find((item) => sameCampus(item, campus)) || {}),
+                  ...campus,
+                  accepted: false,
+                  declined: false,
+                })
+              : current.institutions,
           }))
           return session
         } catch {
@@ -335,6 +445,7 @@ export function StoreProvider({ children }) {
             location: input.location,
             district: input.district,
             file: input.file,
+            ownerEmail: input.owner?.email || stateRef.current.user?.email || "",
           })
           const draft = {
             ...buildProblem(input, stateRef.current.problems, stateRef.current.institutions),
@@ -342,6 +453,10 @@ export function StoreProvider({ children }) {
             domain: classified.category,
             priority: String(classified.priority).toLowerCase(),
             note: `Mock classifier confidence ${classified.confidence}`,
+            ownerId: input.owner?.id || stateRef.current.user?.id,
+            ownerName: input.owner?.name || stateRef.current.user?.name,
+            ownerRole: input.owner?.role || stateRef.current.user?.role || "citizen",
+            ownerEmail: (input.owner?.email || stateRef.current.user?.email || "").toLowerCase(),
           }
           const rematched = buildProblem(
             { ...input, domain: classified.category },
@@ -487,14 +602,44 @@ export function StoreProvider({ children }) {
       respondAsUniversity(problemId, decision, note) {
         const problem = requireProblem(problemId)
         const user = stateRef.current.user
-        if (!problem || problem.universityId !== user?.universityId) return
+        const institution = stateRef.current.institutions.find(
+          (item) =>
+            item.id === user?.universityId
+            || item.name === user?.org
+            || item.name === user?.universityId,
+        )
+        const owns =
+          problem
+          && (
+            problem.universityId === user?.universityId
+            || problem.universityId === institution?.id
+            || problem.universityName === institution?.name
+            || problem.universityName === user?.org
+            || problem.suggestedUniversityId === institution?.id
+            || problem.suggestedUniversityName === institution?.name
+            || problem.suggestedUniversityName === user?.org
+            || problem.suggestedUniversityName === user?.name
+          )
+        if (!problem || !owns) return
+        if (!institution?.accepted) {
+          flash("Government must approve your campus before you can take a brief")
+          return
+        }
         if (decision === "accept") {
           replaceProblem(
-            { ...problem, status: "in_progress", note: note || "Campus team accepted the brief." },
+            {
+              ...problem,
+              status: "in_progress",
+              universityId: institution.id,
+              universityName: institution.name,
+              suggestedUniversityId: institution.id,
+              suggestedUniversityName: institution.name,
+              note: note || "Campus team accepted the brief.",
+            },
             {
               id: uid("e"),
               at: new Date().toISOString(),
-              text: `${problem.universityName} accepted “${problem.title}”.`,
+              text: `${institution.name} accepted “${problem.title}”.`,
               roles: ["government", "university"],
               userIds: [problem.ownerId],
             },
@@ -508,6 +653,8 @@ export function StoreProvider({ children }) {
             status: "in_validation",
             universityId: null,
             universityName: null,
+            suggestedUniversityId: null,
+            suggestedUniversityName: null,
             note: note || "Campus declined. Needs another match.",
           },
           {
@@ -527,6 +674,10 @@ export function StoreProvider({ children }) {
           (item) => item.id === user?.universityId || item.name === user?.org || item.name === user?.universityId,
         )
         if (!problem) return
+        if (!institution?.accepted) {
+          flash("Government must approve your campus before you can request a brief")
+          return
+        }
         http
           .requestBoard({ challenge_id: Number(problem.id), university: institution?.name || user?.org || "" })
           .then((result) => {
@@ -534,10 +685,6 @@ export function StoreProvider({ children }) {
             refreshFromApi()
           })
           .catch(() => flash("Request sent to the department"))
-        if (!institution && !stateRef.current.apiOnline) {
-          flash("The department still has to approve this campus")
-          return
-        }
         const campusName = institution?.name || user?.org || "Campus"
         replaceProblem(
           {
@@ -545,6 +692,8 @@ export function StoreProvider({ children }) {
             status: "requested",
             universityId: institution?.id || campusName,
             universityName: campusName,
+            suggestedUniversityId: institution?.id || campusName,
+            suggestedUniversityName: campusName,
             note: "Campus requested this brief.",
           },
           {
@@ -621,7 +770,9 @@ export function StoreProvider({ children }) {
       },
       advance(problemId) {
         const problem = requireProblem(problemId)
-        if (!problem || !["collaborating", "in_progress"].includes(problem.status)) return
+        if (!problem || !["collaborating", "in_progress", "pending_industry"].includes(problem.status)) {
+          return
+        }
         const progress = Math.min(2, (problem.progress || 0) + 1)
         const completed = progress >= 2
         replaceProblem(
@@ -643,6 +794,50 @@ export function StoreProvider({ children }) {
           },
         )
         flash(completed ? "Marked deployed — ask the citizen for feedback" : "Pilot checkpoint saved")
+      },
+      setChallengeStage(problemId, status) {
+        const problem = requireProblem(problemId)
+        if (!problem) return
+        const allowed = ["in_progress", "pending_industry", "collaborating", "completed"]
+        if (!allowed.includes(status)) return
+        const progress =
+          status === "completed" ? 2 : status === "collaborating" ? Math.max(1, problem.progress || 0) : problem.progress || 0
+        replaceProblem(
+          {
+            ...problem,
+            status,
+            progress,
+            note:
+              status === "completed"
+                ? "Marked deployed by the campus team."
+                : status === "collaborating"
+                  ? "Pilot stage set by the campus team."
+                  : status === "pending_industry"
+                    ? "Waiting on industry partnership."
+                    : "Campus team marked this in progress.",
+            feedback: status === "completed" ? problem.feedback ?? null : problem.feedback,
+          },
+          {
+            id: uid("e"),
+            at: new Date().toISOString(),
+            text: `Campus updated “${problem.title}” to ${status.replaceAll("_", " ")}.`,
+            roles: ["university", "government", "industry", "citizen"],
+            userIds: [problem.ownerId],
+          },
+        )
+        flash(`Stage updated to ${status.replaceAll("_", " ")}`)
+      },
+      assignCampusTeam(problemId, { department, faculty, facultyTitle }) {
+        const problem = requireProblem(problemId)
+        if (!problem) return
+        replaceProblem({
+          ...problem,
+          suggestedDepartment: department || problem.suggestedDepartment,
+          suggestedFaculty: faculty || problem.suggestedFaculty,
+          suggestedFacultyTitle: facultyTitle || problem.suggestedFacultyTitle || "Faculty",
+          note: problem.note || "Campus team assigned.",
+        })
+        flash("Department and faculty saved on this challenge")
       },
       submitFeedback(problemId, payload) {
         const problem = requireProblem(problemId)
@@ -689,45 +884,106 @@ export function StoreProvider({ children }) {
       updateInstitution(id, patch, options = {}) {
         setState((current) => ({
           ...current,
-          institutions: current.institutions.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+          institutions: current.institutions.map((item) =>
+            String(item.id) === String(id) || item.name === id ? { ...item, ...patch } : item,
+          ),
         }))
         if (!options.quiet) flash("Campus profile saved")
+      },
+      ensureCampus(user) {
+        if (!user || user.role !== "university") return
+        const campus = campusProfileFromUser(user)
+        setState((current) => {
+          const existing = current.institutions.find((item) => sameCampus(item, campus))
+          return {
+            ...current,
+            institutions: upsertInstitution(current.institutions, {
+              ...campus,
+              ...(existing || {}),
+              id: existing?.id || campus.id,
+              accepted: existing ? existing.accepted : false,
+              declined: existing ? existing.declined : false,
+            }),
+          }
+        })
       },
       addDepartment(id, name) {
         const clean = name.trim()
         if (!clean) return
-        setState((current) => ({
-          ...current,
-          institutions: current.institutions.map((item) =>
-            item.id === id && !item.depts.includes(clean) ? { ...item, depts: [...item.depts, clean] } : item,
-          ),
-        }))
+        setState((current) => {
+          const match =
+            current.institutions.find((item) => String(item.id) === String(id) || item.name === id)
+            || null
+          if (!match) {
+            const campus = {
+              id,
+              name: String(id),
+              type: "Higher education institution",
+              location: "",
+              about: "",
+              expertise: [],
+              depts: [clean],
+              faculty: [],
+              accepted: true,
+              declined: false,
+            }
+            return { ...current, institutions: [...current.institutions, campus] }
+          }
+          if (match.depts.includes(clean)) return current
+          return {
+            ...current,
+            institutions: current.institutions.map((item) =>
+              sameCampus(item, match) ? { ...item, depts: [...item.depts, clean] } : item,
+            ),
+          }
+        })
+        flash(`Added department: ${clean}`)
       },
       addFaculty(id, name) {
         const clean = name.trim()
         if (!clean) return
-        setState((current) => ({
-          ...current,
-          institutions: current.institutions.map((item) => {
-            if (item.id !== id) return item
-            const names = item.faculty.map((entry) =>
-              typeof entry === "string" ? entry : entry.name,
-            )
-            if (names.includes(clean)) return item
-            return {
-              ...item,
-              faculty: [
-                ...item.faculty,
-                {
-                  name: clean,
-                  title: "Faculty",
-                  department: item.depts?.[0] || "General",
-                  focus: item.expertise?.slice(0, 2) || [],
-                },
-              ],
+        setState((current) => {
+          const match =
+            current.institutions.find((item) => String(item.id) === String(id) || item.name === id)
+            || null
+          if (!match) {
+            const campus = {
+              id,
+              name: String(id),
+              type: "Higher education institution",
+              location: "",
+              about: "",
+              expertise: [],
+              depts: [],
+              faculty: [{ name: clean, title: "Faculty", department: "General", focus: [] }],
+              accepted: true,
+              declined: false,
             }
-          }),
-        }))
+            return { ...current, institutions: [...current.institutions, campus] }
+          }
+          const names = match.faculty.map((entry) => (typeof entry === "string" ? entry : entry.name))
+          if (names.includes(clean)) return current
+          return {
+            ...current,
+            institutions: current.institutions.map((item) =>
+              sameCampus(item, match)
+                ? {
+                    ...item,
+                    faculty: [
+                      ...item.faculty,
+                      {
+                        name: clean,
+                        title: "Faculty",
+                        department: item.depts?.[0] || "General",
+                        focus: item.expertise?.slice(0, 2) || [],
+                      },
+                    ],
+                  }
+                : item,
+            ),
+          }
+        })
+        flash(`Added faculty: ${clean}`)
       },
       reset() {
         localStorage.removeItem(KEY)

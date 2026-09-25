@@ -318,6 +318,7 @@ export function buildProblem(input, problems, institutions) {
     ownerId: input.owner.id,
     ownerName: input.owner.name,
     ownerRole: input.owner.role,
+    ownerEmail: String(input.owner.email || "").trim().toLowerCase(),
     universityId: null,
     universityName: null,
     suggestedUniversityId: university?.id ?? top?.universityId ?? null,

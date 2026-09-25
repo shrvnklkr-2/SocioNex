@@ -5,22 +5,24 @@ import { Logo } from "./Logo"
 import { ThemeToggle } from "./Theme"
 import { pathForRole } from "../data/logic"
 import { useStore } from "../context/Store"
-
-const LINKS = [
-  { id: "home", label: "Home" },
-  { id: "how-it-works", label: "How it works" },
-  { id: "features", label: "Features" },
-  { id: "impact", label: "Impact" },
-]
+import { useLanguage } from "../i18n/LanguageContext"
+import { LanguageSwitcher } from "../i18n/LanguageSwitcher"
 
 export function Navbar() {
   const { user } = useStore()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
 
-  // Scroll spy to update active section link on scroll
+  const LINKS = [
+    { id: "home", label: t("nav.home") },
+    { id: "how-it-works", label: t("nav.how") },
+    { id: "features", label: t("nav.features") },
+    { id: "impact", label: t("nav.impact") },
+  ]
+
   useEffect(() => {
     if (location.pathname !== "/") return
 
@@ -43,7 +45,7 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true })
     handleScroll()
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [location.pathname])
+  }, [location.pathname, t])
 
   const handleNavClick = (id, e) => {
     e.preventDefault()
@@ -103,7 +105,8 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher className="hidden sm:inline-flex" />
           <ThemeToggle />
 
           <button
@@ -121,7 +124,7 @@ export function Navbar() {
               onClick={goRegister}
               className="hidden rounded-full border border-emerald-300 px-4 py-1.5 text-xs font-semibold text-emerald-800 hover:border-emerald-500 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-200 md:inline-flex"
             >
-              Register
+              {t("nav.register")}
             </button>
           )}
 
@@ -130,7 +133,7 @@ export function Navbar() {
             onClick={goWorkspace}
             className="hidden rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-emerald-600/20 transition-colors hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 md:inline-flex"
           >
-            {user ? "Workspace" : "Sign in"}
+            {user ? t("nav.workspace") : t("nav.signIn")}
           </button>
 
           <button
@@ -146,6 +149,9 @@ export function Navbar() {
 
       {open ? (
         <div className="border-t border-slate-200 px-4 py-4 md:hidden dark:border-slate-800">
+          <div className="mb-3">
+            <LanguageSwitcher />
+          </div>
           <div className="flex flex-col gap-3">
             {LINKS.map((link) => {
               const isActive = location.pathname === "/" && activeSection === link.id
@@ -164,7 +170,7 @@ export function Navbar() {
             })}
             {user ? null : (
               <button type="button" onClick={goRegister} className="text-left text-sm text-slate-600 dark:text-slate-400">
-                Register
+                {t("nav.register")}
               </button>
             )}
             <button
@@ -172,7 +178,7 @@ export function Navbar() {
               onClick={goWorkspace}
               className="mt-2 rounded-full bg-emerald-600 px-4 py-2 text-center text-sm font-medium text-white"
             >
-              {user ? "Workspace" : "Sign in"}
+              {user ? t("nav.workspace") : t("nav.signIn")}
             </button>
           </div>
         </div>
@@ -182,16 +188,17 @@ export function Navbar() {
 }
 
 export function Footer() {
+  const { t } = useLanguage()
   return (
     <footer className="border-t border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-950">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-end sm:justify-between sm:px-6 lg:px-8">
         <div>
           <Logo />
           <p className="mt-3 max-w-md text-xs leading-6 text-slate-600 dark:text-slate-400">
-            A workspace where a local report can become a campus project and a field pilot.
+            {t("footer.tagline")}
           </p>
         </div>
-        <p className="text-xs text-slate-400">National Education Policy 2020 · community engagement, in practice.</p>
+        <p className="text-xs text-slate-400">{t("footer.nep")}</p>
       </div>
     </footer>
   )

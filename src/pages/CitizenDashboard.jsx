@@ -16,11 +16,14 @@ export default function CitizenDashboard() {
   const [view, setView] = useState("my-reports")
   const name = helloName(user)
   useTitle(`Hello ${name}`)
-  const mine = problems.filter((item) =>
-    item.ownerId === user.id
-    || item.ownerName === user.name
-    || (user.email && item.ownerEmail === user.email),
-  )
+  const mine = problems.filter((item) => {
+    const email = user.email?.trim().toLowerCase()
+    return (
+      item.ownerId === user.id
+      || item.ownerName === user.name
+      || (email && item.ownerEmail?.trim().toLowerCase() === email)
+    )
+  })
   const needsFeedback = mine.find((item) => item.status === "completed" && !item.feedback)
 
   const sidebar = (

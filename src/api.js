@@ -29,12 +29,13 @@ export const api = {
   challenge(id) {
     return request(`/challenges/${id}`)
   },
-  createChallenge({ title, description, location, district, file }) {
+  createChallenge({ title, description, location, district, file, ownerEmail }) {
     const body = new FormData()
     body.append("title", title)
     body.append("description", description || "")
     body.append("location", location || "")
     body.append("district", district || "")
+    if (ownerEmail) body.append("owner_email", ownerEmail)
     if (file) body.append("image", file)
     return request("/challenges", { method: "POST", body })
   },
@@ -77,6 +78,8 @@ export function mapApiChallenge(row) {
   const assigned = row.assigned_university || row.assigned_to || null
   const status = row.status || "in_validation"
   const early = ["submitted", "in_validation", "rejected"].includes(status)
+  const email = String(row.owner_email || "").trim().toLowerCase()
+  const role = row.owner_role || "citizen"
   return {
     id: String(row.id),
     title: row.title,
@@ -86,10 +89,10 @@ export function mapApiChallenge(row) {
     domain: row.category,
     priority: String(row.priority || "medium").toLowerCase(),
     status,
-    ownerId: `api-${row.owner_email || row.owner_role || "citizen"}`,
+    ownerId: email ? `api-${role}-${email}` : `api-${role}`,
     ownerName: row.owner_name || "Filed on SocioNex",
-    ownerRole: row.owner_role || "citizen",
-    ownerEmail: row.owner_email || "",
+    ownerRole: role,
+    ownerEmail: email,
     universityId: early ? null : assigned,
     universityName: early ? null : assigned,
     suggestedUniversityId: assigned,

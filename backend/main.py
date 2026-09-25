@@ -50,7 +50,68 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Demo seed disabled — database starts empty unless you call seed_if_empty manually.
+    db = SessionLocal()
+    try:
+        defaults = [
+            {
+                "name": "Jharkhand Innovation Cell",
+                "email": "gov@jharkhand.gov.in",
+                "password": "demo123",
+                "role": "government",
+                "org": "Government of Jharkhand",
+            },
+            {
+                "name": "Rakesh Mahato",
+                "email": "rakesh.mahato@example.com",
+                "password": "demo123",
+                "role": "citizen",
+                "org": "",
+            },
+            {
+                "name": "BIT Mesra Innovation Cell",
+                "email": "coordinator@bitmesra-innovation.example.edu",
+                "password": "demo123",
+                "role": "university",
+                "org": "BIT Mesra",
+            },
+            {
+                "name": "Mahindra Rise Partnerships",
+                "email": "partnerships@mahindrarise.example.com",
+                "password": "demo123",
+                "role": "industry",
+                "org": "Mahindra Rise",
+            },
+            {
+                "name": "Gram Vikas Samiti",
+                "email": "hello@gramvikas.example",
+                "password": "demo123",
+                "role": "community",
+                "org": "Gram Vikas Samiti",
+            },
+        ]
+        for row in defaults:
+            existing = db.query(User).filter(User.email == row["email"], User.role == row["role"]).first()
+            if existing:
+                existing.password = row["password"]
+                existing.name = row["name"]
+                existing.org = row["org"]
+            else:
+                db.add(User(**row))
+            if row["role"] == "university":
+                uni = db.query(University).filter(University.name == row["org"]).first()
+                if not uni and row["org"]:
+                    db.add(
+                        University(
+                            name=row["org"],
+                            location="Ranchi",
+                            expertise="Engineering, Innovation",
+                            reason="Default campus account",
+                            score=88,
+                        )
+                    )
+        db.commit()
+    finally:
+        db.close()
     yield
 
 
@@ -141,6 +202,18 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
             org=payload.org,
         )
     )
+    if payload.role == "university" and payload.org.strip():
+        uni = db.query(University).filter(University.name == payload.org.strip()).first()
+        if not uni:
+            db.add(
+                University(
+                    name=payload.org.strip(),
+                    location="",
+                    expertise="",
+                    reason="Registered campus on SocioNex",
+                    score=80,
+                )
+            )
     db.commit()
     return RegisterOut(message="Registration successful")
 
@@ -151,6 +224,7 @@ def create_challenge(
     description: str = Form(""),
     location: str = Form(""),
     district: str = Form(""),
+    owner_email: str = Form(""),
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -161,6 +235,9 @@ def create_challenge(
         target = UPLOAD_DIR / filename
         target.write_bytes(image.file.read())
     district_name = district or (location.split(",")[-1].strip() if location else "Ranchi")
+    owner = None
+    if owner_email.strip():
+        owner = db.query(User).filter(User.email == owner_email.strip().lower()).first()
     challenge = Challenge(
         title=title.strip(),
         description=description.strip(),
@@ -173,6 +250,7 @@ def create_challenge(
         assigned_to=assigned_to,
         status="in_validation",
         progress=0,
+        owner_id=owner.id if owner else None,
     )
     db.add(challenge)
     db.commit()
