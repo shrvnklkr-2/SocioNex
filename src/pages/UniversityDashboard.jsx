@@ -6,7 +6,7 @@ import { ProblemRow } from "../components/ProblemRow"
 import { StatGrid } from "../components/StatGrid"
 import { Button, Input, TextArea, useTitle } from "../components/ui"
 import { useStore } from "../context/Store"
-import { helloName, STATUS_LABEL } from "../data/logic"
+import { helloName, STATUS_LABEL, momentumFromProblems, networkFromProblems } from "../data/logic"
 import { DOMAINS } from "../data/seed"
 
 const NAV = [
@@ -78,6 +78,8 @@ export default function UniversityDashboard() {
   )
   const inbox = mine.filter((item) => item.status === "assigned")
   const tracking = mine.filter((item) => !["assigned", "requested"].includes(item.status))
+  const momentum = useMemo(() => momentumFromProblems(problems), [problems])
+  const network = useMemo(() => networkFromProblems(problems, overview), [problems, overview])
   const suggestedForUs = problems.filter(
     (item) =>
       ["submitted", "in_validation"].includes(item.status)
@@ -163,9 +165,13 @@ export default function UniversityDashboard() {
                 </div>
                 <Link to="/impact" className="rounded-full border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50">View analytics</Link>
               </div>
-              <MomentumChart />
+              <MomentumChart
+                months={momentum.map((item) => item.label)}
+                submitted={momentum.map((item) => item.submitted)}
+                resolved={momentum.map((item) => item.resolved)}
+              />
             </article>
-            <ListeningCard />
+            <ListeningCard contributors={network.contributors} districts={network.districts} />
           </div>
 
         </div>

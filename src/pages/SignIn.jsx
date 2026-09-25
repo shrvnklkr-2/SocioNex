@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Button, Input, useTitle } from "../components/ui"
 import { useStore } from "../context/Store"
 import { pathForRole } from "../data/logic"
-import { DEMO_PASSWORD, DEMO_USERS } from "../data/seed"
 
 const ROLES = [
   { id: "citizen", label: "Citizen" },
@@ -13,17 +12,9 @@ const ROLES = [
   { id: "government", label: "Government" },
 ]
 
-const DEMO_HINT = {
-  citizen: DEMO_USERS.citizen.email,
-  community: DEMO_USERS.community.email,
-  university: DEMO_USERS.university.email,
-  industry: DEMO_USERS.industry.email,
-  government: DEMO_USERS.government.email,
-}
-
 export default function SignIn() {
   useTitle("Sign in")
-  const { login, signIn, reset } = useStore()
+  const { login, reset } = useStore()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const requested = params.get("role")
@@ -86,32 +77,12 @@ export default function SignIn() {
           New to Socionex?{" "}
           <Link to={`/register?role=${role}`} className="font-medium text-accent">Create an account</Link>
         </p>
-        <p className="text-xs leading-5 text-muted">
-          Sample {role} desk: {DEMO_HINT[role]} · password {DEMO_PASSWORD}
-        </p>
       </form>
-      <section className="mt-8 rounded-[28px] border border-dashed border-line bg-card/70 p-5">
-        <h2 className="text-sm font-semibold">Open a sample desk</h2>
-        <p className="mt-1 text-sm text-muted">Skips the password and loads the shared cases.</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {Object.entries(DEMO_USERS).map(([key, user]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                signIn(user)
-                finish(user)
-              }}
-              className="rounded-full border border-line bg-card px-3 py-2 text-sm hover:bg-mist"
-            >
-              {ROLES.find((item) => item.id === user.role)?.label}
-            </button>
-          ))}
-        </div>
-        <button type="button" onClick={reset} className="mt-4 text-xs text-muted underline">
+      <div className="mt-6 text-center">
+        <button type="button" onClick={reset} className="text-xs text-muted underline">
           Reset workspace data
         </button>
-      </section>
+      </div>
     </div>
   )
 }

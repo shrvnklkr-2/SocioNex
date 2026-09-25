@@ -111,6 +111,8 @@ class OverviewOut(BaseModel):
     assigned: int
     inProgress: int
     completed: int
+    contributors: int = 0
+    districtsRepresented: int = 0
 
 
 class CategoryCount(BaseModel):

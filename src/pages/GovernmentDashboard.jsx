@@ -6,7 +6,7 @@ import { ProblemRow } from "../components/ProblemRow"
 import { StatGrid } from "../components/StatGrid"
 import { Button, useTitle } from "../components/ui"
 import { useStore } from "../context/Store"
-import { STATUS_LABEL } from "../data/logic"
+import { STATUS_LABEL, momentumFromProblems, networkFromProblems } from "../data/logic"
 
 const NAV = [
   { id: "overview", label: "Overview & Analytics" },
@@ -34,6 +34,8 @@ export default function GovernmentDashboard() {
 
   const waiting = institutions.filter((item) => !item.accepted && !item.declined)
   const approved = institutions.filter((item) => item.accepted)
+  const momentum = useMemo(() => momentumFromProblems(problems), [problems])
+  const network = useMemo(() => networkFromProblems(problems, overview), [problems, overview])
 
   const visible = useMemo(() => {
     return problems.filter((problem) => {
@@ -101,9 +103,13 @@ export default function GovernmentDashboard() {
                 </div>
                 <Link to="/impact" className="rounded-full border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50">View analytics</Link>
               </div>
-              <MomentumChart />
+              <MomentumChart
+                months={momentum.map((item) => item.label)}
+                submitted={momentum.map((item) => item.submitted)}
+                resolved={momentum.map((item) => item.resolved)}
+              />
             </article>
-            <ListeningCard />
+            <ListeningCard contributors={network.contributors} districts={network.districts} />
           </div>
         </div>
       )}

@@ -27,8 +27,6 @@ from schemas import (
     StatusCount,
     UniversityMatch,
 )
-from seed import seed_if_empty
-
 CATEGORIES = [
     "Education",
     "Healthcare",
@@ -52,11 +50,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    db = SessionLocal()
-    try:
-        seed_if_empty(db)
-    finally:
-        db.close()
+    # Demo seed disabled — database starts empty unless you call seed_if_empty manually.
     yield
 
 
@@ -325,13 +319,21 @@ def open_board_request(payload: BoardRequestIn, db: Session = Depends(get_db)):
 def dashboard_overview(db: Session = Depends(get_db)):
     total = db.query(Challenge).count()
     assigned = db.query(Challenge).filter(Challenge.status == "assigned").count()
-    in_progress = db.query(Challenge).filter(Challenge.status == "in_progress").count()
+    in_progress = (
+        db.query(Challenge)
+        .filter(Challenge.status.in_(("in_progress", "collaborating", "pending_industry")))
+        .count()
+    )
     completed = db.query(Challenge).filter(Challenge.status == "completed").count()
+    contributors = db.query(User).count()
+    districts = db.query(Challenge.district).distinct().count()
     return OverviewOut(
-        totalChallenges=max(total, 150) if total <= 20 else total,
-        assigned=90 if total <= 20 else assigned,
-        inProgress=45 if total <= 20 else in_progress,
-        completed=15 if total <= 20 else completed,
+        totalChallenges=total,
+        assigned=assigned,
+        inProgress=in_progress,
+        completed=completed,
+        contributors=contributors,
+        districtsRepresented=districts,
     )
 
 
@@ -357,15 +359,24 @@ def status_stats(db: Session = Depends(get_db)):
 def leaderboard(db: Session = Depends(get_db)):
     unis = db.query(University).order_by(University.score.desc()).limit(5).all()
     people = db.query(User).limit(5).all()
-    return LeaderboardOut(
-        universities=[LeaderEntry(name=item.name, score=item.score, label=item.location) for item in unis],
-        users=[LeaderEntry(name=item.name, score=80 + index * 3, label=item.role) for index, item in enumerate(people)],
-    )
+    uni_scores = []
+    for item in unis:
+        assigned = (
+            db.query(Challenge)
+            .filter(Challenge.assigned_to == item.name)
+            .count()
+        )
+        uni_scores.append(LeaderEntry(name=item.name, score=assigned, label=item.location))
+    user_scores = []
+    for item in people:
+        filed = db.query(Challenge).filter(Challenge.owner_id == item.id).count()
+        user_scores.append(LeaderEntry(name=item.name, score=filed, label=item.role))
+    return LeaderboardOut(universities=uni_scores, users=user_scores)
 
 
 @app.get("/dashboard/map-data", response_model=list[MapPoint])
 def map_data(db: Session = Depends(get_db)):
-    rows = db.query(Challenge).order_by(Challenge.id).limit(20).all()
+    rows = db.query(Challenge).order_by(Challenge.id).all()
     points = []
     rng = random.Random(21)
     for row in rows:
@@ -376,17 +387,6 @@ def map_data(db: Session = Depends(get_db)):
                 district=row.district,
                 lat=round(22.4 + rng.random() * 2.2, 4),
                 lng=round(83.5 + rng.random() * 3.6, 4),
-            )
-        )
-    while len(points) < 20:
-        index = len(points) + 1
-        points.append(
-            MapPoint(
-                id=index,
-                title=f"Open report {index}",
-                district="Ranchi",
-                lat=round(23.3 + rng.random(), 4),
-                lng=round(85.3 + rng.random(), 4),
             )
         )
     return points

@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom"
 import { ArrowUpRight, Sparkles } from "lucide-react"
-import { MONTHS, RESOLVED_SERIES, SUBMITTED_SERIES } from "../data/seed"
 
 function smoothPath(series, x, y) {
+  if (!series.length) return ""
   const points = series.map((value, index) => [x(index), y(value)])
   let path = `M ${points[0][0]} ${points[0][1]}`
   for (let index = 0; index < points.length - 1; index += 1) {
@@ -19,20 +19,27 @@ function smoothPath(series, x, y) {
   return path
 }
 
-export function MomentumChart({ tall = false }) {
+export function MomentumChart({ tall = false, months = [], submitted = [], resolved = [] }) {
+  const labels = months.length ? months : ["—"]
+  const submittedSeries = submitted.length ? submitted : labels.map(() => 0)
+  const resolvedSeries = resolved.length ? resolved : labels.map(() => 0)
   const width = 560
   const height = tall ? 280 : 230
   const padX = 36
   const padY = 24
-  const max = 100
-  const x = (index) => padX + (index * (width - padX * 2)) / (MONTHS.length - 1)
+  const peak = Math.max(4, ...submittedSeries, ...resolvedSeries)
+  const tickStep = peak <= 4 ? 1 : Math.ceil(peak / 4)
+  const ticks = [tickStep, tickStep * 2, tickStep * 3, tickStep * 4].filter((tick) => tick <= peak * 1.05)
+  const max = ticks[ticks.length - 1] || peak
+  const x = (index) =>
+    labels.length === 1 ? width / 2 : padX + (index * (width - padX * 2)) / (labels.length - 1)
   const y = (value) => height - padY - 16 - (value / max) * (height - padY * 2 - 16)
-  const submitted = smoothPath(SUBMITTED_SERIES, x, y)
-  const resolved = smoothPath(RESOLVED_SERIES, x, y)
+  const submittedPath = smoothPath(submittedSeries, x, y)
+  const resolvedPath = smoothPath(resolvedSeries, x, y)
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" role="img" aria-label="Challenges submitted and resolved over six months">
-      {[25, 50, 75, 100].map((tick) => (
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" role="img" aria-label="Challenges submitted and resolved over recent months">
+      {ticks.map((tick) => (
         <g key={tick}>
           <line x1={padX} x2={width - padX} y1={y(tick)} y2={y(tick)} stroke="var(--line)" />
           <text x={4} y={y(tick) + 4} fill="var(--muted)" fontSize="11">
@@ -40,11 +47,17 @@ export function MomentumChart({ tall = false }) {
           </text>
         </g>
       ))}
-      <path d={`${submitted} L ${x(MONTHS.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`} fill="var(--indigo)" opacity="0.12" />
-      <path d={submitted} fill="none" stroke="var(--indigo)" strokeWidth="3" strokeLinecap="round" />
-      <path d={resolved} fill="none" stroke="var(--mint)" strokeWidth="3" strokeLinecap="round" />
-      {MONTHS.map((month, index) => (
-        <text key={month} x={x(index)} y={height - 6} textAnchor="middle" fill="var(--muted)" fontSize="12">
+      {submittedPath ? (
+        <>
+          <path d={`${submittedPath} L ${x(labels.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`} fill="var(--indigo)" opacity="0.12" />
+          <path d={submittedPath} fill="none" stroke="var(--indigo)" strokeWidth="3" strokeLinecap="round" />
+        </>
+      ) : null}
+      {resolvedPath ? (
+        <path d={resolvedPath} fill="none" stroke="var(--mint)" strokeWidth="3" strokeLinecap="round" />
+      ) : null}
+      {labels.map((month, index) => (
+        <text key={`${month}-${index}`} x={x(index)} y={height - 6} textAnchor="middle" fill="var(--muted)" fontSize="12">
           {month}
         </text>
       ))}
@@ -52,7 +65,7 @@ export function MomentumChart({ tall = false }) {
   )
 }
 
-export function ListeningCard() {
+export function ListeningCard({ contributors = 0, districts = 0 }) {
   const dots = [
     [28, 96],
     [92, 78],
@@ -89,11 +102,11 @@ export function ListeningCard() {
       </svg>
       <div className="mt-2 grid grid-cols-2 gap-4 pt-2">
         <div>
-          <p className="text-3xl font-bold tracking-tight text-emerald-200">1,204</p>
+          <p className="text-3xl font-bold tracking-tight text-emerald-200">{contributors.toLocaleString()}</p>
           <p className="text-sm text-emerald-100/70">active contributors</p>
         </div>
         <div>
-          <p className="text-3xl font-bold tracking-tight text-emerald-200">24</p>
+          <p className="text-3xl font-bold tracking-tight text-emerald-200">{districts.toLocaleString()}</p>
           <p className="text-sm text-emerald-100/70">districts represented</p>
         </div>
       </div>

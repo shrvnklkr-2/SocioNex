@@ -1,4 +1,4 @@
-import { DOMAINS, DOMAIN_BASE } from "./seed"
+import { DOMAINS } from "./seed"
 
 const RULES = [
   { domain: "Healthcare", keys: ["health", "hospital", "clinic", "ambulance", "maternal", "disease", "malaria", "patient"] },
@@ -451,27 +451,79 @@ export function compactNumber(value) {
 }
 
 export function liveStats(problems) {
-  const validation = problems.filter((item) =>
-    ["submitted", "in_validation", "requested"].includes(item.status),
-  ).length
-  const active = problems.filter((item) =>
-    ["assigned", "in_progress", "pending_industry", "collaborating"].includes(item.status),
-  ).length
-  const done = problems.filter((item) => item.status === "completed").length
+  const list = problems || []
   return {
-    submitted: 240 + problems.length,
-    validation: 34 + validation,
-    active: 79 + active,
-    impacted: 18000 + done * 200 + problems.length * 25,
+    submitted: list.length,
+    assigned: list.filter((item) => item.status === "assigned").length,
+    inProgress: list.filter((item) =>
+      ["in_progress", "collaborating", "pending_industry"].includes(item.status),
+    ).length,
+    completed: list.filter((item) => item.status === "completed").length,
   }
 }
 
+export function momentumFromProblems(problems, months = 6) {
+  const list = problems || []
+  const now = new Date()
+  const buckets = []
+  for (let offset = months - 1; offset >= 0; offset -= 1) {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1)
+    buckets.push({
+      key: `${date.getFullYear()}-${date.getMonth()}`,
+      label: date.toLocaleString("en", { month: "short" }),
+      submitted: 0,
+      resolved: 0,
+    })
+  }
+  for (const problem of list) {
+    const created = new Date(problem.createdAt || Date.now())
+    if (Number.isNaN(created.getTime())) continue
+    const key = `${created.getFullYear()}-${created.getMonth()}`
+    const bucket = buckets.find((item) => item.key === key)
+    if (!bucket) continue
+    bucket.submitted += 1
+    if (problem.status === "completed") bucket.resolved += 1
+  }
+  return buckets
+}
+
+export function networkFromProblems(problems, overview) {
+  const list = problems || []
+  const owners = new Set(
+    list
+      .map((item) => item.ownerEmail || item.ownerId || item.ownerName)
+      .filter(Boolean),
+  )
+  const districts = new Set(list.map((item) => item.district).filter(Boolean))
+  return {
+    contributors: overview?.contributors ?? owners.size,
+    districts: overview?.districtsRepresented ?? districts.size,
+  }
+}
+
+export function districtSnapshot(problems) {
+  const byDistrict = new Map()
+  for (const problem of problems || []) {
+    const name = problem.district || "Unknown"
+    const row = byDistrict.get(name) || { district: name, open: 0, pilot: 0, closed: 0 }
+    if (problem.status === "completed") row.closed += 1
+    else if (["in_progress", "collaborating", "pending_industry", "assigned"].includes(problem.status)) {
+      row.pilot += 1
+    } else row.open += 1
+    byDistrict.set(name, row)
+  }
+  return [...byDistrict.values()].sort((a, b) => b.open + b.pilot + b.closed - (a.open + a.pilot + a.closed))
+}
+
 export function domainPressure(problems) {
-  const counts = Object.fromEntries(DOMAINS.map((domain) => [domain, DOMAIN_BASE[domain] ?? 0]))
-  for (const problem of problems) {
+  const counts = {}
+  for (const problem of problems || []) {
+    if (!problem.domain) continue
     counts[problem.domain] = (counts[problem.domain] ?? 0) + 1
   }
-  return DOMAINS.map((domain) => ({ domain, count: counts[domain] })).sort((a, b) => b.count - a.count)
+  return Object.entries(counts)
+    .map(([domain, count]) => ({ domain, count }))
+    .sort((a, b) => b.count - a.count)
 }
 
 export function visibleEvents(user, events) {

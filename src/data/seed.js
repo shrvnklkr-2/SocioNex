@@ -68,48 +68,6 @@ export const DISTRICT_SNAPSHOT = [
   { district: "Khunti", open: 7, pilot: 3, closed: 4 },
 ]
 
-export const DEMO_PASSWORD = "demo123"
-
-export const DEMO_USERS = {
-  citizen: {
-    id: "demo-citizen",
-    role: "citizen",
-    name: "Asha Kumari",
-    email: "asha.kumari@example.com",
-  },
-  community: {
-    id: "demo-community",
-    role: "community",
-    name: "Gram Vikas Samiti",
-    email: "hello@gramvikas.example",
-    roleLabel: "NGO",
-    address: "Murhu, Khunti",
-  },
-  university: {
-    id: "demo-uni",
-    role: "university",
-    name: "Dr. Meera Kujur",
-    email: "meera.kujur@cuj.ac.in",
-    org: "Central University of Jharkhand",
-    universityId: "cuj",
-  },
-  industry: {
-    id: "demo-industry",
-    role: "industry",
-    name: "Rohan Sen",
-    email: "rohan.sen@bosch.example",
-    org: "Bosch India",
-    industryId: "bosch",
-  },
-  government: {
-    id: "demo-gov",
-    role: "government",
-    name: "Innovation Cell",
-    email: "innovation@jharkhand.gov.in",
-    org: "Government of Jharkhand",
-  },
-}
-
 export const PARTNERS = [
   {
     id: "mahindra",
@@ -590,10 +548,10 @@ export const EVENTS = [
 export function createInitialState() {
   return {
     user: null,
-    problems: structuredClone(PROBLEMS),
+    problems: [],
     institutions: structuredClone(INSTITUTIONS),
     partners: structuredClone(PARTNERS),
     accounts: [],
-    events: structuredClone(EVENTS),
+    events: [],
   }
 }

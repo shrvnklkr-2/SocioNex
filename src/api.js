@@ -1,11 +1,5 @@
 const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8001"
 
-const OWNER_IDS = {
-  "Asha Kumari": "demo-citizen",
-  "Gram Vikas Samiti": "demo-community",
-  "Ravi Oraon": "citizen-ravi",
-}
-
 async function request(path, options = {}) {
   const response = await fetch(`${API}${path}`, {
     ...options,
@@ -92,7 +86,7 @@ export function mapApiChallenge(row) {
     domain: row.category,
     priority: String(row.priority || "medium").toLowerCase(),
     status,
-    ownerId: OWNER_IDS[row.owner_name] || `api-${row.owner_email || row.owner_role || "citizen"}`,
+    ownerId: `api-${row.owner_email || row.owner_role || "citizen"}`,
     ownerName: row.owner_name || "Filed on SocioNex",
     ownerRole: row.owner_role || "citizen",
     ownerEmail: row.owner_email || "",

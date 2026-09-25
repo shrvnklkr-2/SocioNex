@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { api as http, mapApiChallenge, mapApiUniversity } from "../api"
 import { buildProblem, hashPassword, matchRecommendations, sessionUser, slugify, uid } from "../data/logic"
-import { createInitialState, DEMO_PASSWORD, DEMO_USERS, INSTITUTIONS } from "../data/seed"
+import { createInitialState, INSTITUTIONS } from "../data/seed"
 
-const KEY = "socionex-workspace-v1"
+const KEY = "socionex-workspace-v3"
 const StoreContext = createContext(null)
 
 function enrichUniversity(row) {
@@ -202,25 +202,20 @@ export function StoreProvider({ children }) {
         const normalized = email.trim().toLowerCase()
         try {
           const data = await http.login({ email: normalized, password, role })
-          const demo = Object.values(DEMO_USERS).find(
-            (item) => item.role === data.role && item.email.toLowerCase() === normalized,
-          )
-          const user = demo
-            ? { ...demo, token: data.token, email: data.email || demo.email, org: data.org || demo.org }
-            : {
-                id: `api-${data.role}`,
-                role: data.role,
-                name: data.name,
-                email: data.email || normalized,
-                org: data.org || "",
-                token: data.token,
-                universityId: data.role === "university" ? data.org : undefined,
-                industryId: data.role === "industry" ? data.org : undefined,
-              }
+          const user = {
+            id: `api-${data.role}-${normalized}`,
+            role: data.role,
+            name: data.name,
+            email: data.email || normalized,
+            org: data.org || "",
+            token: data.token,
+            universityId: data.role === "university" ? data.org : undefined,
+            industryId: data.role === "industry" ? data.org : undefined,
+          }
           setState((current) => ({ ...current, user }))
           return { user }
         } catch {
-          /* local demo fallback */
+          /* fall through to local accounts */
         }
         const account = stateRef.current.accounts.find(
           (item) => item.email === normalized && item.role === role,
@@ -235,13 +230,6 @@ export function StoreProvider({ children }) {
         }
         if (account && !account.passwordHash) {
           return { error: "This account has no password yet. Create it again from Register." }
-        }
-        const demo = Object.values(DEMO_USERS).find(
-          (item) => item.role === role && item.email.toLowerCase() === normalized,
-        )
-        if (demo && password === DEMO_PASSWORD) {
-          setState((current) => ({ ...current, user: demo }))
-          return { user: demo }
         }
         return { error: "No account matches that role, email, and password." }
       },
