@@ -111,6 +111,55 @@ async def lifespan(_app: FastAPI):
                         )
                     )
         db.commit()
+
+        # Hardcoded demo brief: Rakesh → BIT Mesra
+        rakesh = (
+            db.query(User)
+            .filter(User.email == "rakesh.mahato@example.com", User.role == "citizen")
+            .first()
+        )
+        getalsud_title = "Unmanaged waste dumping near Getalsud reservoir"
+        existing_brief = db.query(Challenge).filter(Challenge.title == getalsud_title).first()
+        if rakesh and not existing_brief:
+            challenge = Challenge(
+                title=getalsud_title,
+                description=(
+                    "Households and small vendors near Getalsud reservoir have been dumping solid waste "
+                    "directly into the water body for over a year due to the absence of a municipal collection "
+                    "point nearby. This is Ranchi's main drinking water source, and residents are worried about "
+                    "contamination. There is no segregation, no scheduled pickup, and open burning of plastic "
+                    "waste happens weekly, causing air quality issues in nearby hamlets."
+                ),
+                location="Getalsud reservoir",
+                district="Ranchi",
+                image="",
+                category="Environment",
+                priority="High",
+                confidence=0.94,
+                assigned_to="BIT Mesra",
+                status="assigned",
+                progress=0,
+                owner_id=rakesh.id,
+            )
+            db.add(challenge)
+            db.flush()
+            for index, (step, status) in enumerate(
+                [
+                    ("Submitted", "Completed"),
+                    ("Site Visit", "Pending"),
+                    ("Prototype Design", "Pending"),
+                    ("Pilot", "Pending"),
+                ]
+            ):
+                db.add(
+                    Milestone(
+                        challenge_id=challenge.id,
+                        title=step,
+                        status=status,
+                        sort_order=index,
+                    )
+                )
+            db.commit()
     finally:
         db.close()
     yield
@@ -155,6 +204,9 @@ def fake_classify(title: str, description: str, location: str):
         ("ambulance", "Healthcare"),
         ("dust", "Environment"),
         ("forest", "Environment"),
+        ("waste", "Environment"),
+        ("dumping", "Environment"),
+        ("getalsud", "Environment"),
         ("solar", "Energy"),
         ("street", "Urban development"),
         ("ramp", "Accessibility"),
