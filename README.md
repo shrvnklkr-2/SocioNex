@@ -103,11 +103,11 @@ python -m uvicorn main:app --reload --port 8001
 Developed for Smart India Hackathon (SIH) 2026
 
 Team HackHers
-Trisha Deshmukh
-Shravani Joshi
-Sanika Mane
-Shravani Kolekar
-Jenis Dabre
-Bliss Gonsalves
+-Trisha Deshmukh
+-Shravani Joshi
+-Sanika Mane
+-Shravani Kolekar
+-Jenis Dabre
+-Bliss Gonsalves
 
 "Connecting Communities with Innovation and Impact."
