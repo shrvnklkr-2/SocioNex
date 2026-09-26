@@ -98,16 +98,24 @@ pip install -r requirements.txt
 python -m uvicorn main:app --reload --port 8001
 ```
 
-## Team
+##  Team SocioNex
 
-Developed for Smart India Hackathon (SIH) 2026
 
-Team HackHers
--Trisha Deshmukh
--Shravani Joshi
--Sanika Mane
--Shravani Kolekar
--Jenis Dabre
--Bliss Gonsalves
+ Member 1 
+ Member 2 
+ Member 3
+ Member 4 
+ Member 5 
+ Member 6 
 
-"Connecting Communities with Innovation and Impact."
+---
+
+### Institution
+
+St. Francis Institute of Technology (SFIT), Mumbai
+
+### Hackathon
+
+Smart India Hackathon (SIH) 2026
+
+*"Connecting Communities, Universities, Industries, and Government for Social Impact."*
