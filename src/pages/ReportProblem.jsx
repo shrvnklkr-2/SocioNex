@@ -96,9 +96,9 @@ export default function ReportProblem() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
       <p className="text-[11px] font-semibold tracking-[0.18em] text-muted uppercase">Citizen engagement</p>
-      <h1 className="mt-2 font-display text-5xl">Report a problem</h1>
+      <h1 className="mt-2 font-display text-3xl sm:text-5xl">Report a problem</h1>
       <p className="mt-3 text-sm leading-6 text-muted">
         Signed in as {user.name}. Add the place and what is failing. Photographs and short videos can ride along as file names in this demo.
       </p>

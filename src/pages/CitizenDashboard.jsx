@@ -4,7 +4,7 @@ import { DashboardFrame } from "../components/DashboardFrame"
 import { ProblemRow } from "../components/ProblemRow"
 import { useTitle } from "../components/ui"
 import { useStore } from "../context/Store"
-import { helloName } from "../data/logic"
+import { helloName, ownsProblem } from "../data/logic"
 
 const NAV = [
   { id: "my-reports", label: "My Submissions" },
@@ -12,18 +12,11 @@ const NAV = [
 ]
 
 export default function CitizenDashboard() {
-  const { user, problems, submitFeedback } = useStore()
+  const { user, problems, submitFeedback, refreshFromApi, apiOnline } = useStore()
   const [view, setView] = useState("my-reports")
   const name = helloName(user)
   useTitle(`Hello ${name}`)
-  const mine = problems.filter((item) => {
-    const email = user.email?.trim().toLowerCase()
-    return (
-      item.ownerId === user.id
-      || item.ownerName === user.name
-      || (email && item.ownerEmail?.trim().toLowerCase() === email)
-    )
-  })
+  const mine = problems.filter((item) => ownsProblem(user, item))
   const needsFeedback = mine.find((item) => item.status === "completed" && !item.feedback)
 
   const sidebar = (
@@ -117,14 +110,24 @@ export default function CitizenDashboard() {
     >
       {view === "my-reports" ? (
         mine.length === 0 ? (
-          <div className="w-full rounded-[28px] border border-dashed border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 px-6 py-16 text-center shadow-[0_0_20px_-3px_rgba(16,185,129,0.15)]">
-            <p className="font-display text-3xl font-normal text-slate-900 dark:text-white sm:text-4xl">No problem reported yet</p>
+          <div className="w-full rounded-[28px] border border-dashed border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 px-4 py-12 text-center shadow-[0_0_20px_-3px_rgba(16,185,129,0.15)] sm:px-6 sm:py-16">
+            <p className="font-display text-2xl font-normal text-slate-900 dark:text-white sm:text-4xl">No problem reported yet</p>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 dark:text-slate-400">
               When you file a challenge it will sit here with the campus, the partner, and whether it is still pending.
+              {!apiOnline ? " Server is offline — filings stay on this device only." : ""}
             </p>
-            <Link to="/report" className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 transition-colors">
-              Report a problem →
-            </Link>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/report" className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 transition-colors">
+                Report a problem →
+              </Link>
+              <button
+                type="button"
+                onClick={() => refreshFromApi()}
+                className="inline-flex items-center gap-2 rounded-full border-2 border-emerald-500 px-5 py-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-200"
+              >
+                Refresh from server
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4 w-full">

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
-import { api as http, mapApiChallenge, mapApiUniversity } from "../api"
+import { api as http, mapApiChallenge, mapApiUniversity, ownerKey } from "../api"
 import { buildProblem, hashPassword, matchRecommendations, sessionUser, slugify, uid } from "../data/logic"
 import { createInitialState, INSTITUTIONS } from "../data/seed"
 
@@ -277,7 +277,7 @@ export function StoreProvider({ children }) {
         try {
           const data = await http.login({ email: normalized, password, role })
           const user = {
-            id: `api-${data.role}-${normalized}`,
+            id: ownerKey(data.role, normalized),
             role: data.role,
             name: data.name,
             email: data.email || normalized,
@@ -307,6 +307,7 @@ export function StoreProvider({ children }) {
             }
             return { ...current, user, institutions }
           })
+          await refreshFromApi()
           return { user }
         } catch {
           /* fall through to local / default accounts */
@@ -346,7 +347,7 @@ export function StoreProvider({ children }) {
         const demo = defaults[role]
         if (demo && demo.email === normalized && password === demo.password) {
           const user = {
-            id: `demo-${role}-${normalized}`,
+            id: ownerKey(role, normalized),
             role,
             name: demo.name,
             email: demo.email,
@@ -366,6 +367,7 @@ export function StoreProvider({ children }) {
             }
             return { ...current, user, institutions, apiOnline: false }
           })
+          await refreshFromApi()
           return { user }
         }
         const account = stateRef.current.accounts.find(
@@ -377,6 +379,7 @@ export function StoreProvider({ children }) {
           }
           const user = sessionUser(account)
           setState((current) => ({ ...current, user }))
+          await refreshFromApi()
           return { user }
         }
         if (account && !account.passwordHash) {
@@ -396,7 +399,7 @@ export function StoreProvider({ children }) {
           })
           const data = await http.login({ email, password: partial.password, role: partial.role })
           const session = {
-            id: uid("u"),
+            id: ownerKey(data.role || partial.role, email),
             ...partial,
             email,
             token: data.token,
@@ -429,6 +432,7 @@ export function StoreProvider({ children }) {
                 })
               : current.institutions,
           }))
+          await refreshFromApi()
           return session
         } catch {
           /* local demo fallback */
@@ -442,7 +446,7 @@ export function StoreProvider({ children }) {
         }
         const { password, ...profile } = partial
         const user = {
-          id: existing?.id || uid("u"),
+          id: existing?.id || ownerKey(partial.role, email),
           ...profile,
           email,
           passwordHash: hashPassword(password),
@@ -495,6 +499,10 @@ export function StoreProvider({ children }) {
         return session
       },
       async reportProblem(input) {
+        const owner = input.owner || stateRef.current.user
+        const ownerEmail = String(owner?.email || "").trim().toLowerCase()
+        const ownerRole = owner?.role || "citizen"
+        const stableOwnerId = ownerKey(ownerRole, ownerEmail)
         try {
           const classified = await http.createChallenge({
             title: input.title,
@@ -502,21 +510,25 @@ export function StoreProvider({ children }) {
             location: input.location,
             district: input.district,
             file: input.file,
-            ownerEmail: input.owner?.email || stateRef.current.user?.email || "",
+            ownerEmail,
           })
           const draft = {
-            ...buildProblem(input, stateRef.current.problems, stateRef.current.institutions),
+            ...buildProblem(
+              { ...input, owner: { ...owner, id: stableOwnerId, email: ownerEmail, role: ownerRole } },
+              stateRef.current.problems,
+              stateRef.current.institutions,
+            ),
             id: String(classified.id),
             domain: classified.category,
             priority: String(classified.priority).toLowerCase(),
             note: `Mock classifier confidence ${classified.confidence}`,
-            ownerId: input.owner?.id || stateRef.current.user?.id,
-            ownerName: input.owner?.name || stateRef.current.user?.name,
-            ownerRole: input.owner?.role || stateRef.current.user?.role || "citizen",
-            ownerEmail: (input.owner?.email || stateRef.current.user?.email || "").toLowerCase(),
+            ownerId: stableOwnerId,
+            ownerName: owner?.name || stateRef.current.user?.name,
+            ownerRole,
+            ownerEmail,
           }
           const rematched = buildProblem(
-            { ...input, domain: classified.category },
+            { ...input, domain: classified.category, owner: { ...owner, id: stableOwnerId, email: ownerEmail } },
             stateRef.current.problems,
             stateRef.current.institutions,
           )
@@ -544,10 +556,13 @@ export function StoreProvider({ children }) {
           await refreshFromApi()
           return draft
         } catch {
-          /* local demo fallback */
+          /* local fallback — will NOT appear on other devices */
         }
         const draft = buildProblem(
-          input,
+          {
+            ...input,
+            owner: { ...owner, id: stableOwnerId, email: ownerEmail, role: ownerRole },
+          },
           stateRef.current.problems,
           stateRef.current.institutions,
         )
@@ -566,7 +581,7 @@ export function StoreProvider({ children }) {
             events: [event, ...current.events].slice(0, 30),
           }
         })
-        flash(`Filed under ${draft.domain}`)
+        flash("Server offline — saved on this device only. Other logins will not see it.")
         return draft
       },
       routeToUniversity(problemId, universityId) {

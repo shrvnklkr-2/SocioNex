@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
+import os
 import random
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
@@ -116,9 +117,25 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="SocioNex mock API", version="0.1.0", lifespan=lifespan)
+
+_frontend = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+]
+if _frontend:
+    _origins.append(_frontend)
+_origins.extend(
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4173"],
+    allow_origins=_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -236,8 +253,17 @@ def create_challenge(
         target.write_bytes(image.file.read())
     district_name = district or (location.split(",")[-1].strip() if location else "Ranchi")
     owner = None
-    if owner_email.strip():
-        owner = db.query(User).filter(User.email == owner_email.strip().lower()).first()
+    email_key = owner_email.strip().lower()
+    if email_key:
+        owner = db.query(User).filter(User.email == email_key).first()
+        # If the account exists under a slightly different casing or was just seeded,
+        # still attach so My Submissions works on every device.
+        if not owner:
+            owner = (
+                db.query(User)
+                .filter(User.email.ilike(email_key))
+                .first()
+            )
     challenge = Challenge(
         title=title.strip(),
         description=description.strip(),

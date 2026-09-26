@@ -31,7 +31,32 @@ export function hashPassword(password) {
 
 export function sessionUser(account) {
   const { passwordHash, ...user } = account
-  return user
+  const email = String(user.email || "").trim().toLowerCase()
+  return {
+    ...user,
+    email,
+    id: user.id || (email ? `api-${user.role}-${email}` : uid("u")),
+  }
+}
+
+/** Same account owns a filing across demo/api login and devices. */
+export function ownsProblem(user, item) {
+  if (!user || !item) return false
+  const email = String(user.email || "").trim().toLowerCase()
+  const itemEmail = String(item.ownerEmail || "").trim().toLowerCase()
+  if (email && itemEmail && email === itemEmail) return true
+  if (item.ownerId && user.id && String(item.ownerId) === String(user.id)) return true
+  if (email) {
+    const role = user.role || "citizen"
+    if (
+      item.ownerId === `api-${role}-${email}`
+      || item.ownerId === `demo-${role}-${email}`
+    ) {
+      return true
+    }
+  }
+  if (user.name && item.ownerName && item.ownerName === user.name) return true
+  return false
 }
 
 export function classifyText(text) {

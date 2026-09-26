@@ -6,7 +6,7 @@ export function LanguageSwitcher({ className = "", size = "sm" }) {
 
   return (
     <div
-      className={`inline-flex items-center rounded-full border border-emerald-300/80 bg-white/90 p-0.5 shadow-sm dark:border-emerald-700 dark:bg-slate-900/90 ${className}`}
+      className={`inline-flex max-w-full items-center rounded-full border border-emerald-300/80 bg-white/90 p-0.5 shadow-sm dark:border-emerald-700 dark:bg-slate-900/90 ${className}`}
       role="group"
       aria-label={t("nav.language")}
     >
@@ -17,7 +17,8 @@ export function LanguageSwitcher({ className = "", size = "sm" }) {
             key={item.id}
             type="button"
             onClick={() => setLang(item.id)}
-            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all sm:px-3 ${
+            title={item.label}
+            className={`rounded-full px-1.5 py-1 text-[10px] font-semibold transition-all xs:px-2 sm:px-3 sm:text-[11px] ${
               compact ? "" : "sm:text-xs"
             } ${
               active
@@ -26,7 +27,8 @@ export function LanguageSwitcher({ className = "", size = "sm" }) {
             }`}
             aria-pressed={active}
           >
-            {item.label}
+            <span className="sm:hidden">{item.short || item.label}</span>
+            <span className="hidden sm:inline">{item.label}</span>
           </button>
         )
       })}

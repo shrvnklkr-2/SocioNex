@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "/api" : "http://127.0.0.1:8001")
+const API = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "")
 
 async function request(path, options = {}) {
   const response = await fetch(`${API}${path}`, {
@@ -89,7 +89,7 @@ export function mapApiChallenge(row) {
     domain: row.category,
     priority: String(row.priority || "medium").toLowerCase(),
     status,
-    ownerId: email ? `api-${role}-${email}` : `api-${role}`,
+    ownerId: ownerKey(role, email),
     ownerName: row.owner_name || "Filed on SocioNex",
     ownerRole: role,
     ownerEmail: email,
@@ -129,4 +129,11 @@ export function mapApiUniversity(row) {
     declined: false,
     score: row.score,
   }
+}
+
+/** Stable owner id so the same account matches filings across devices / login modes. */
+export function ownerKey(role, email) {
+  const r = String(role || "citizen").trim().toLowerCase()
+  const e = String(email || "").trim().toLowerCase()
+  return e ? `api-${r}-${e}` : `api-${r}`
 }

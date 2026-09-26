@@ -66,7 +66,7 @@ export default function SignIn() {
       <div className="mb-6 flex justify-center">
         <LanguageSwitcher />
       </div>
-      <h1 className="text-center font-display text-5xl">{t("auth.signIn")}</h1>
+      <h1 className="text-center font-display text-3xl sm:text-5xl">{t("auth.signIn")}</h1>
       <p className="mx-auto mt-3 max-w-md text-center text-sm leading-6 text-muted">
         {t("auth.samplePassword")}
       </p>
